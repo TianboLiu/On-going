@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <cstring>
 
 #include "TROOT.h"
 #include "TApplication.h"
@@ -33,7 +34,7 @@ class Lanalysis{
   double Pp;
  public:
   Lanalysis(double st);
-  int makebininfotree(const char bininfo[], const char bintree[], const double E0);
+  static int MakeBinInfoTree(const char bininfo[], const char bintree[], const double E0);
   int getsimulationinfo(const char datadir[], double * Nsim, double * genvol, double * days);
   int binanalysis(const char bintreep[], const char bintreem[], const char sidis[], const char datadir[], const int Ntree);
   int ThreetermMatrix(const double * hr, double * M3inv);
