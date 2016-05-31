@@ -100,9 +100,9 @@ class Lstructure{
   static int Asin3HmSp(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
   static int Asin3HmSn(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
   static int Asin3HmSN(const double * AZ, const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  double xsprefactor(const double * kin);
+  static double xsprefactor(const double * kin);
   static int CalcVariables(const double * lab, double * phys);
-  double Jacobian(const double * lab);//d trento / d lab
+  static double Jacobian(const double * lab);//d trento / d lab
   static int sigmaUUTp(const double * lab, double * xs, const double * fpara, const double * Dpara);
   static int sigmaUUTn(const double * lab, double * xs, const double * fpara, const double * Dpara);
   static int sigmaUUT(const double * AZ, const double * lab, double * xs, const double * fpara, const double * Dpara);// lab frame
