@@ -28,83 +28,85 @@ class Lstructure{
   void Getstd_H1para(double * para);
   void Getpoly_H1para(double * para);
   /* unpolarized PDF */
-  int f1_ct14(const double * var, double * f1);
-  int f1_mmht(const double * var, double * f1);
-  int f1p(const double * var, double * f1, const char set[]);
-  int f1n(const double * var, double * f1, const char set[]);
-  int f1N(const double * AZ, const double * var, double * f1, const char set[]);
+  static int f1_ct14(const double * var, double * f1);
+  static int f1_mmht(const double * var, double * f1);
+  static int f1p(const double * var, double * f1, const char set[]);
+  static int f1n(const double * var, double * f1, const char set[]);
+  static int f1N(const double * AZ, const double * var, double * f1, const char set[]);
   /* helicity */
-  int g1_grsv(const double * var, double * g1);
-  int g1_dssv(const double * var, double * g1);
-  int g1p(const double * var, double * g1, const char set[]);
-  int g1n(const double * var, double * g1, const char set[]);
-  int g1N(const double * AZ, const double * var, double * g1, const char set[]);
+  static int g1_grsv(const double * var, double * g1);
+  static int g1_dssv(const double * var, double * g1);
+  static int g1p(const double * var, double * g1, const char set[]);
+  static int g1n(const double * var, double * g1, const char set[]);
+  static int g1N(const double * AZ, const double * var, double * g1, const char set[]);
   /* transversity */
-  int h1_std(const double * var, double * h1, const double * para);
-  int h1charge_std(const double Q2, double * tc, const double * para);
-  int tmd_h1_std(const double * var, double * h1, const double * para);
-  int h1p(const double * var, double * h1, const double * para);
-  int h1n(const double * var, double * h1, const double * para);
-  int h1N(const double * AZ, const double * var, double * h1, const double * para);
+  static int h1_std(const double * var, double * h1, const double * para);
+  static int h1charge_std(const double Q2, double * tc, const double * para);
+  static int tmd_h1_std(const double * var, double * h1, const double * para);
+  static int h1p(const double * var, double * h1, const double * para);
+  static int h1n(const double * var, double * h1, const double * para);
+  static int h1N(const double * AZ, const double * var, double * h1, const double * para);
   /* Sivers */
-  int f1t_std(const double * var, double * f1t, const double * para);/* zeroth moment */
-  int tmd_f1t_std(const double * var, double * f1t, const double * para);/* x, kt */
-  int f1tM_std(const double * var, double * f1tM, const double * para);/* first moment */
-  int f1tMcharge_std(const double Q2, double * tc, const double * para);
-  int f1tp(const double * var, double * f1t, const double * para);
-  int f1tn(const double * var, double * f1t, const double * para);
-  int f1tN(const double * AZ, const double * var, double * f1t, const double * para);
+  static int f1t_std(const double * var, double * f1t, const double * para);/* zeroth moment */
+  static int tmd_f1t_std(const double * var, double * f1t, const double * para);/* x, kt */
+  static int f1tM_std(const double * var, double * f1tM, const double * para);/* first moment */
+  static int f1tMcharge_std(const double Q2, double * tc, const double * para);
+  static int f1tp(const double * var, double * f1t, const double * para);
+  static int f1tn(const double * var, double * f1t, const double * para);
+  static int f1tN(const double * AZ, const double * var, double * f1t, const double * para);
   /* pretzelosity */
-  int h1t_std(const double * var, double * h1t, const double * para);/* zeroth moment*/
-  int h1tM_std(const double * var, double * h1tM, const double * para);/* first moment*/
-  int h1tMcharge_std(const double Q2, double * tc, const double * para);
-  int h1tp(const double * var, double * h1t, const double * para);
-  int h1tn(const double * var, double * h1t, const double * para);
-  int h1tN(const double * AZ, const double * var, double * h1t, const double * para);
+  static int h1t_std(const double * var, double * h1t, const double * para);/* zeroth moment*/
+  static int h1tM_std(const double * var, double * h1tM, const double * para);/* first moment*/
+  static int h1tMcharge_std(const double Q2, double * tc, const double * para);
+  static int h1tp(const double * var, double * h1t, const double * para);
+  static int h1tn(const double * var, double * h1t, const double * para);
+  static int h1tN(const double * AZ, const double * var, double * h1t, const double * para);
   /* unpolarized FF */
-  int D1_dss(const double * var, double * D1);
-  int D1pip(const double * var, double * D1, const char set[]);
-  int D1pim(const double * var, double * D1, const char set[]);
+  static int D1_dss(const double * var, double * D1);
+  static int D1pip(const double * var, double * D1, const char set[]);
+  static int D1pim(const double * var, double * D1, const char set[]);
   /* Collins */
-  int H1_std(const double * var, double * H1, const double * para);/* zeroth moment */
-  int H1_poly(const double * var, double * H1, const double * para);
-  int H1pip(const double * var, double * H1, const double * para, const char set[]);
-  int H1pim(const double * var, double * H1, const double * para, const char set[]);
-  /* structure functions */
-  int FUUTp(const double * var, double * FF, const double * fpara, const double * Dpara);
-  int FUUTn(const double * var, double * FF, const double * fpara, const double * Dpara);
-  int FUUTN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
-  int FUTsinHmSp(const double * var, double * FF, const double * fpara, const double * Dpara);
-  int FUTsinHmSn(const double * var, double * FF, const double * fpara, const double * Dpara);
-  int FUTsinHmSN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
-  int FUTsinHpSp(const double * var, double * FF, const double * hpara, const double * Hpara);
-  int FUTsinHpSn(const double * var, double * FF, const double * hpara, const double * Hpara);
-  int FUTsinHpSN(const double * AZ, const double * var, double * FF, const double * hpara, const double * Hpara);
-  int FUTsin3HmSp(const double * var, double * FF, const double * hpara, const double * Hpara);
-  int FUTsin3HmSn(const double * var, double * FF, const double * hpara, const double * Hpara);
-  int FUTsin3HmSN(const double * AZ, const double * var, double * FF, const double * hpara, const double * Hpara);
-  int FUTsinSp(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
-  int FUTsinSn(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
-  int FUTsinSN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
-  int AsinHmSp(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int AsinHmSn(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int AsinHmSN(const double * AZ, const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int AsinHpSp(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int AsinHpSn(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int AsinHpSN(const double * AZ, const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int Asin3HmSp(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int Asin3HmSn(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
-  int Asin3HmSN(const double * AZ, const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int H1_std(const double * var, double * H1, const double * para);/* zeroth moment */
+  static int H1_poly(const double * var, double * H1, const double * para);
+  static int H1pip(const double * var, double * H1, const double * para, const char set[]);
+  static int H1pim(const double * var, double * H1, const double * para, const char set[]);
+  /* Inclusive structure functions*/
+  static int DISF2p(const double * var, double * FF);
+  static int DISF2n(const double * var, double * FF);
+  static int DISF2N(const double * AZ, const double * var, double * FF);
+  /* Semi-inclusive structure functions */
+  static int FUUTp(const double * var, double * FF, const double * fpara, const double * Dpara);
+  static int FUUTn(const double * var, double * FF, const double * fpara, const double * Dpara);
+  static int FUUTN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
+  static int FUTsinHmSp(const double * var, double * FF, const double * fpara, const double * Dpara);
+  static int FUTsinHmSn(const double * var, double * FF, const double * fpara, const double * Dpara);
+  static int FUTsinHmSN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
+  static int FUTsinHpSp(const double * var, double * FF, const double * hpara, const double * Hpara);
+  static int FUTsinHpSn(const double * var, double * FF, const double * hpara, const double * Hpara);
+  static int FUTsinHpSN(const double * AZ, const double * var, double * FF, const double * hpara, const double * Hpara);
+  static int FUTsin3HmSp(const double * var, double * FF, const double * hpara, const double * Hpara);
+  static int FUTsin3HmSn(const double * var, double * FF, const double * hpara, const double * Hpara);
+  static int FUTsin3HmSN(const double * AZ, const double * var, double * FF, const double * hpara, const double * Hpara);
+  static int FUTsinSp(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int FUTsinSn(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int FUTsinSN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  /* Semi-inclusive asymmetries */
+  static int AsinHmSp(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int AsinHmSn(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int AsinHmSN(const double * AZ, const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int AsinHpSp(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int AsinHpSn(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int AsinHpSN(const double * AZ, const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int Asin3HmSp(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int Asin3HmSn(const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
+  static int Asin3HmSN(const double * AZ, const double * kin, double * Asym, const double * Tf, const double * TD, const double * Uf, const double * UD);
   double xsprefactor(const double * kin);
-  int CalcVariables(const double * lab, double * phys);
+  static int CalcVariables(const double * lab, double * phys);
   double Jacobian(const double * lab);//d trento / d lab
-  int sigmaUUTp(const double * lab, double * xs, const double * fpara, const double * Dpara);
-  int sigmaUUTn(const double * lab, double * xs, const double * fpara, const double * Dpara);
-  int sigmaUUT(const double * AZ, const double * lab, double * xs, const double * fpara, const double * Dpara);// lab frame
+  static int sigmaUUTp(const double * lab, double * xs, const double * fpara, const double * Dpara);
+  static int sigmaUUTn(const double * lab, double * xs, const double * fpara, const double * Dpara);
+  static int sigmaUUT(const double * AZ, const double * lab, double * xs, const double * fpara, const double * Dpara);// lab frame
 };
-
-Lstructure * lst;
-Lstructure glst(1.0);
 
 Lstructure::Lstructure(double ts){
   std_f1para = 0.25;//kt2
@@ -184,9 +186,9 @@ int Lstructure::f1_mmht(const double * var, double * f1){
 
 int Lstructure::f1p(const double * var, double * f1, const char set[] = "ct14"){
   if (strcmp(set,"ct14") == 0)
-    lst->f1_ct14(var, f1);
+    f1_ct14(var, f1);
   else if (strcmp(set,"mmht") == 0)
-    lst->f1_mmht(var, f1);
+    f1_mmht(var, f1);
   else {
     std::cout << "Lstructure::f1p: No such PDF set!" << std::endl;
     return 1;
@@ -197,9 +199,9 @@ int Lstructure::f1p(const double * var, double * f1, const char set[] = "ct14"){
 int Lstructure::f1n(const double * var, double * f1, const char set[] = "ct14"){
   double pf1[6];
   if (strcmp(set,"ct14") == 0)
-    lst->f1_ct14(var, pf1);
+    f1_ct14(var, pf1);
   else if (strcmp(set,"mmht") == 0)
-    lst->f1_mmht(var, pf1);
+    f1_mmht(var, pf1);
   else {
     std::cout << "Lstructure::f1n: No such PDF set!" << std::endl;
     return 1;
@@ -218,8 +220,8 @@ int Lstructure::f1N(const double * AZ, const double * var, double * f1, const ch
   double Np = AZ[0];
   double Nn = AZ[1];
   double pf1[6], nf1[6];
-  lst->f1p(var, pf1, set);
-  lst->f1n(var, nf1, set);
+  f1p(var, pf1, set);
+  f1n(var, nf1, set);
   for (int i = 0; i < 6; i++){
     f1[i] = Np * pf1[i] + Nn * nf1[i];
   }
@@ -277,9 +279,9 @@ int Lstructure::g1_dssv(const double * var, double * g1){
 
 int Lstructure::g1p(const double * var, double * g1, const char set[] = "grsv"){
   if (strcmp(set,"grsv") == 0)
-    lst->g1_grsv(var, g1);
+    g1_grsv(var, g1);
   else if (strcmp(set,"dssv") == 0)
-    lst->g1_dssv(var, g1);
+    g1_dssv(var, g1);
   else {
     std::cout << "Lstructure::g1p: No such g1 set!" << std::endl;
     return 1;
@@ -290,9 +292,9 @@ int Lstructure::g1p(const double * var, double * g1, const char set[] = "grsv"){
 int Lstructure::g1n(const double * var, double * g1, const char set[] = "grsv"){
   double pg1[6];
   if (strcmp(set,"grsv") == 0)
-    lst->g1_grsv(var, pg1);
+    g1_grsv(var, pg1);
   else if (strcmp(set,"dssv") == 0)
-    lst->g1_dssv(var, pg1);
+    g1_dssv(var, pg1);
   else {
     std::cout << "Lstructure::g1n: No such g1 set!" << std::endl;
     return 1;
@@ -314,8 +316,8 @@ int Lstructure::g1N(const double * AZ, const double * var, double * g1, const ch
   double Poln = AZ[3];
   double pg1[6];
   double ng1[6];
-  lst->g1p(var, pg1, set);
-  lst->g1n(var, ng1, set);
+  g1p(var, pg1, set);
+  g1n(var, ng1, set);
   for (int i = 0; i < 6; i++){
     g1[i] = Np * Polp * pg1[i] + Nn * Poln * ng1[i];
   }
@@ -345,8 +347,8 @@ int Lstructure::h1_std(const double * var, double * h1, const double * para = 0)
   }
   double x = var[0];
   double f1[6], g1[6];
-  lst->f1p(var, f1, "ct14");
-  lst->g1p(var, g1, "grsv");
+  f1p(var, f1, "ct14");
+  g1p(var, g1, "grsv");
   h1[0] = 0.5 * Nu * pow(x,au) * pow(1.0-x,bu) * pow(au+bu,au+bu)/pow(au,au)/pow(bu,bu) * (f1[0] + g1[0]);//u
   h1[1] = 0.5 * Nd * pow(x,ad) * pow(1.0-x,bd) * pow(ad+bd,ad+bd)/pow(ad,ad)/pow(bd,bd) * (f1[1] + g1[1]);//d
   h1[2] = 0;
@@ -363,7 +365,7 @@ int Lstructure::h1charge_std(const double Q2, double * tc, const double * para =
   var[1] = Q2;
   for (double x = 0.5 * step; x < 1.0; x = x + step){
     var[0] = x;
-    lst->h1_std(var, h1, para);
+    h1_std(var, h1, para);
     for (int i = 0; i < 6; i++){
       sum[i] = sum[i] + h1[i];
     }
@@ -380,7 +382,7 @@ int Lstructure::tmd_h1_std(const double * var, double * h1, const double * para 
   if (para == 0) kt2 = 0.25;
   else kt2 = para[6];
   double h10[6];
-  lst->h1_std(var, h10, para);
+  h1_std(var, h10, para);
   for (int i = 0; i < 6; i++){
     h1[i] = h10[i] * exp(-var[2]*var[2]/kt2) / (M_PI * kt2);
   }
@@ -388,13 +390,13 @@ int Lstructure::tmd_h1_std(const double * var, double * h1, const double * para 
 }
 
 int Lstructure::h1p(const double * var, double * h1, const double * para = 0){
-  lst->h1_std(var, h1, para);
+  h1_std(var, h1, para);
   return 0;
 }
 
 int Lstructure::h1n(const double * var, double * h1, const double * para = 0){
   double ph1[6];
-  lst->h1_std(var, ph1, para);
+  h1_std(var, ph1, para);
   h1[0] = ph1[1];
   h1[1] = ph1[0];
   h1[2] = ph1[2];
@@ -411,8 +413,8 @@ int Lstructure::h1N(const double * AZ, const double * var, double * h1, const do
   double Polp = AZ[2];
   double Poln = AZ[3];
   double ph1[6], nh1[6];
-  lst->h1p(var, ph1, para);
-  lst->h1n(var, nh1, para);
+  h1p(var, ph1, para);
+  h1n(var, nh1, para);
   for (int i = 0; i < 6; i++){
     h1[i] = Np * Polp * ph1[i] + Nn * Poln * nh1[i];
   }
@@ -452,7 +454,7 @@ int Lstructure::f1t_std(const double * var, double * f1t, const double * para = 
   }
   const double Mproton = 0.93827;
   double f1[6];
-  lst->f1p(var, f1, "ct14");
+  f1p(var, f1, "ct14");
   f1t[0] = - f1[0] * Nu * pow(x,au) * pow(1.0-x,b) * pow(au+b,au+b) / pow(au,au) / pow(b,b) * sqrt(2.0*exp(1)) * Mproton * sqrt(Ms2) / (Ms2 + 0.25);//u
   f1t[1] = - f1[1] * Nd * pow(x,ad) * pow(1.0-x,b) * pow(ad+b,ad+b) / pow(ad,ad) / pow(b,b) * sqrt(2.0*exp(1)) * Mproton * sqrt(Ms2) / (Ms2 + 0.25);//d
   f1t[2] = - f1[2] * Ns * pow(x,asea) * pow(1.0-x,b) * pow(asea+b,asea+b) / pow(asea,asea) / pow(b,b) * sqrt(2.0*exp(1)) * Mproton * sqrt(Ms2) / (Ms2 + 0.25);//s
@@ -469,7 +471,7 @@ int Lstructure::tmd_f1t_std(const double * var, double * f1t, const double * par
   else Ms2 = para[10];
   double kt2 = 0.25 * Ms2 / (Ms2 + 0.25);
   double f1tx[6];
-  lst->f1t_std(var, f1tx, para);
+  f1t_std(var, f1tx, para);
   for (int i = 0; i < 6; i++){
     f1t[i] = f1tx[i] * exp(-var[2]*var[2]/kt2) / (M_PI * kt2);
   }
@@ -483,7 +485,7 @@ int Lstructure::f1tM_std(const double * var, double * f1tM, const double * para 
   double kt2 = 0.25 * Ms2 / (Ms2 + 0.25);
   const double Mproton = 0.93827;
   double f1t[6];
-  lst->f1t_std(var, f1t, para);
+  f1t_std(var, f1t, para);
   for (int i = 0; i < 6; i++){
     f1tM[i] = kt2 / (2.0 * pow(Mproton,2)) * f1t[i];
   }
@@ -497,7 +499,7 @@ int Lstructure::f1tMcharge_std(const double Q2, double * tc, const double * para
   var[1] = Q2;
   for (double x = 0.5 * step; x < 1.0; x = x + step){
     var[0] = x;
-    lst->f1tM_std(var, f1tM, para);
+    f1tM_std(var, f1tM, para);
     for (int i = 0; i < 6; i++){
       sum[i] = sum[i] + f1tM[i];
     }
@@ -511,13 +513,13 @@ int Lstructure::f1tMcharge_std(const double Q2, double * tc, const double * para
 }
 
 int Lstructure::f1tp(const double * var, double * f1t, const double * para = 0){
-  lst->f1t_std(var, f1t, para);
+  f1t_std(var, f1t, para);
   return 0;
 }
 
 int Lstructure::f1tn(const double * var, double * f1t, const double * para = 0){
   double pf1t[6];
-  lst->f1t_std(var, pf1t, para);
+  f1t_std(var, pf1t, para);
   f1t[0] = pf1t[1];
   f1t[1] = pf1t[0];
   f1t[2] = pf1t[2];
@@ -534,8 +536,8 @@ int Lstructure::f1tN(const double * AZ, const double * var, double * f1t, const 
   double Polp = AZ[2];
   double Poln = AZ[3];
   double pf1t[6], nf1t[6];
-  lst->f1tp(var, pf1t, para);
-  lst->f1tn(var, nf1t, para);
+  f1tp(var, pf1t, para);
+  f1tn(var, nf1t, para);
   for (int i = 0; i < 6; i++){
     f1t[i] = Np * Polp * pf1t[i] + Nn * Poln * nf1t[i];
   }
@@ -566,8 +568,8 @@ int Lstructure::h1t_std(const double * var, double * h1t, const double * para = 
   }
   double f1[6], g1[6];
   const double Mproton = 0.93827;
-  lst->f1p(var, f1, "ct14");
-  lst->g1p(var, g1, "dssv");
+  f1p(var, f1, "ct14");
+  g1p(var, g1, "dssv");
   h1t[0] = (f1[0] - g1[0]) * Nu * pow(x,au) * pow(1.0-x,bu) * pow(au+bu,au+bu) / pow(au,au) / pow(bu,bu) * exp(1) * pow(Mproton,2) / (Mt2 + 0.25);//u
   h1t[1] = (f1[1] - g1[1]) * Nd * pow(x,ad) * pow(1.0-x,bd) * pow(ad+bd,ad+bd) / pow(ad,ad) / pow(bd,bd) * exp(1) * pow(Mproton,2) / (Mt2 + 0.25);//d
   h1t[2] = 0;
@@ -584,7 +586,7 @@ int Lstructure::h1tM_std(const double * var, double * h1tM, const double * para 
   double kt2 = 0.25 * Mt2 / (Mt2 + 0.25);
   double h1t[6];
   const double Mproton = 0.93827;
-  lst->h1t_std(var, h1t, para);
+  h1t_std(var, h1t, para);
   for (int i = 0; i < 6; i++){
     h1tM[i] = kt2 / (2.0 * pow(Mproton,2)) * h1t[i];
   }
@@ -598,7 +600,7 @@ int Lstructure::h1tMcharge_std(const double Q2, double * tc, const double * para
   var[1] = Q2;
   for (double x = 0.5 * step; x < 1.0; x = x + step){
     var[0] = x;
-    lst->h1tM_std(var, h1tM, para);
+    h1tM_std(var, h1tM, para);
     for (int i = 0; i < 6; i++){
       sum[i] = sum[i] + h1tM[i];
     }
@@ -610,13 +612,13 @@ int Lstructure::h1tMcharge_std(const double Q2, double * tc, const double * para
 }
 
 int Lstructure::h1tp(const double * var, double * h1t, const double * para = 0){
-  lst->h1t_std(var, h1t, para);
+  h1t_std(var, h1t, para);
   return 0;
 }
 
 int Lstructure::h1tn(const double * var, double * h1t, const double * para = 0){
   double ph1t[6];
-  lst->h1t_std(var, ph1t, para);
+  h1t_std(var, ph1t, para);
   h1t[0] = ph1t[1];
   h1t[1] = ph1t[0];
   h1t[2] = ph1t[2];
@@ -633,8 +635,8 @@ int Lstructure::h1tN(const double * AZ, const double * var, double * h1t, const 
   double Polp = AZ[2];
   double Poln = AZ[3];
   double ph1t[6], nh1t[6];
-  lst->h1tp(var, ph1t, para);
-  lst->h1tn(var, nh1t, para);
+  h1tp(var, ph1t, para);
+  h1tn(var, nh1t, para);
   for (int i = 0; i < 6; i++){
     h1t[i] = Np * Polp * ph1t[i] + Nn * Poln * nh1t[i];
   }
@@ -667,7 +669,7 @@ int Lstructure::D1_dss(const double * var, double * D1){
 
 int Lstructure::D1pip(const double * var, double * D1, const char set[] = "dss"){
   if (strcmp(set,"dss") == 0)
-    lst->D1_dss(var, D1);
+    D1_dss(var, D1);
   else {
     std::cout << "Lstructure::D1pip: No such D1 set!" << std::endl;
     return 1;
@@ -678,7 +680,7 @@ int Lstructure::D1pip(const double * var, double * D1, const char set[] = "dss")
 int Lstructure::D1pim(const double * var, double * D1, const char set[] = "dss"){
   double D1p[6];
   if (strcmp(set,"dss") == 0)
-    lst->D1_dss(var, D1p);
+    D1_dss(var, D1p);
   else {
     std::cout << "Lstructure::D1pim: No such D1 set!" << std::endl;
     return 1;
@@ -716,7 +718,7 @@ int Lstructure::H1_std(const double * var, double * H1, const double * para = 0)
   }
   const double Mpion = 0.13957;
   double D1[6];
-  lst->D1_dss(var, D1);
+  D1_dss(var, D1);
   H1[0] = D1[0] * Nu * z * pow(z,cu) * pow(1.0-z,du) * pow(cu+du,cu+du) / pow(cu,cu) / pow(du,du) * sqrt(2.0*exp(1)) * Mpion * sqrt(Mh2) / (Mh2 + 0.20);//u
   H1[1] = D1[1] * Nd * z * pow(z,cd) * pow(1.0-z,dd) * pow(cd+dd,cd+dd) / pow(cd,cd) / pow(dd,dd) * sqrt(2.0*exp(1)) * Mpion * sqrt(Mh2) / (Mh2 + 0.20);//d
   H1[2] = D1[2] * Nd * z * pow(z,cd) * pow(1.0-z,dd) * pow(cd+dd,cd+dd) / pow(cd,cd) / pow(dd,dd) * sqrt(2.0*exp(1)) * Mpion * sqrt(Mh2) / (Mh2 + 0.20);//s
@@ -750,7 +752,7 @@ int Lstructure::H1_poly(const double * var, double * H1, const double * para = 0
   }
   const double Mpion = 0.13957;
   double D1[6];
-  lst->D1_dss(var, D1);
+  D1_dss(var, D1);
   H1[0] = D1[0] * Nu * z * z * ((1.0 - cu - du) + cu * z + du * z * z) * sqrt(2.0*exp(1)) * Mpion * sqrt(Mh2) / (Mh2 + 0.20);//u
   H1[1] = D1[1] * Nd * z * z * ((1.0 - cd - dd) + cd * z + dd * z * z) * sqrt(2.0*exp(1)) * Mpion * sqrt(Mh2) / (Mh2 + 0.20);//d
   H1[2] = D1[2] * Nd * z * z * ((1.0 - cd - dd) + cd * z + dd * z * z) * sqrt(2.0*exp(1)) * Mpion * sqrt(Mh2) / (Mh2 + 0.20);//s
@@ -762,9 +764,9 @@ int Lstructure::H1_poly(const double * var, double * H1, const double * para = 0
 
 int Lstructure::H1pip(const double * var, double * H1, const double * para = 0, const char set[] = "std"){
   if (strcmp(set, "std") == 0)
-    lst->H1_std(var, H1, para);
+    H1_std(var, H1, para);
   else if (strcmp(set, "poly") == 0)
-    lst->H1_poly(var, H1, para);
+    H1_poly(var, H1, para);
   else {
     std::cout << "Lstructure::H1pip: No such H1 set!" << std::endl;
     return 1;
@@ -775,9 +777,9 @@ int Lstructure::H1pip(const double * var, double * H1, const double * para = 0, 
 int Lstructure::H1pim(const double * var, double * H1, const double * para = 0, const char set[] = "std"){
   double pH1[6];
   if (strcmp(set, "std") == 0)
-    lst->H1_std(var, pH1, para);
+    H1_std(var, pH1, para);
   else if (strcmp(set, "poly") == 0)
-    lst->H1_poly(var, pH1, para);
+    H1_poly(var, pH1, para);
   else {
     std::cout << "Lstructure::H1pim: No such H1 set!" << std::endl;
     return 1;
@@ -790,6 +792,27 @@ int Lstructure::H1pim(const double * var, double * H1, const double * para = 0, 
   H1[5] = pH1[2];
   return 0;
 }
+
+int Lstructure::DISF2p(const double * var, double * FF){
+  double f1[6];
+  f1p(var, f1, "ct14");
+  FF[0] = pow(2.0/3.0, 2) * var[0] * (f1[0] + f1[3]) + pow(1.0/3.0, 2) * var[0] * (f1[1] + f1[2] + f1[4] + f1[5]);
+  return 0;
+}
+
+int Lstructure::DISF2n(const double * var, double * FF){
+  double f1[6];
+  f1n(var, f1, "ct14");
+  FF[0] = pow(2.0/3.0, 2) * var[0] * (f1[0] + f1[3]) + pow(1.0/3.0, 2) * var[0] * (f1[1] + f1[2] + f1[4] + f1[5]);
+  return 0;
+}
+
+int Lstructure::DISF2N(const double * AZ, const double * var, double * FF){
+  double f1[6];
+  f1N(AZ, var, f1, "ct14");
+  FF[0] = pow(2.0/3.0, 2) * var[0] * (f1[0] + f1[3]) + pow(1.0/3.0, 2) * var[0] * (f1[1] + f1[2] + f1[4] + f1[5]);
+  return 0;
+} 
 
 int Lstructure::FUUTp(const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0){
   //var: x, Q2, z, Pt
@@ -806,10 +829,10 @@ int Lstructure::FUUTp(const double * var, double * FF, const double * fpara = 0,
   double f1[6], D1[6];
   double f1var[2] = {x, Q2};
   double D1var[2] = {z, Q2};
-  lst->f1p(f1var, f1);
-  lst->D1pip(D1var, D1);
+  f1p(f1var, f1);
+  D1pip(D1var, D1);
   FF[0] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->D1pim(D1var, D1);
+  D1pim(D1var, D1);
   FF[1] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -829,10 +852,10 @@ int Lstructure::FUUTn(const double * var, double * FF, const double * fpara = 0,
   double f1[6], D1[6];
   double f1var[2] = {x, Q2};
   double D1var[2] = {z, Q2};
-  lst->f1n(f1var, f1);
-  lst->D1pip(D1var, D1);
+  f1n(f1var, f1);
+  D1pip(D1var, D1);
   FF[0] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->D1pim(D1var, D1);
+  D1pim(D1var, D1);
   FF[1] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -842,8 +865,8 @@ int Lstructure::FUUTN(const double * AZ, const double * var, double * FF, const 
   double Np = AZ[0];
   double Nn = AZ[1];
   double FFp[2], FFn[2];
-  lst->FUUTp(var, FFp, fpara, Dpara);
-  lst->FUUTn(var, FFn, fpara, Dpara);
+  FUUTp(var, FFp, fpara, Dpara);
+  FUUTn(var, FFn, fpara, Dpara);
   FF[0] = Np * FFp[0] + Nn * FFn[0];
   FF[1] = Np * FFp[1] + Nn * FFn[1];
   return 0;
@@ -865,12 +888,12 @@ int Lstructure::FUTsinHmSp(const double * var, double * FF, const double * fpara
   double f1t[6], D1[6];
   double fvar[2] = {x, Q2};
   double Dvar[2] = {z, Q2};
-  lst->f1tp(fvar, f1t, fpara);
-  lst->D1pip(Dvar, D1);
+  f1tp(fvar, f1t, fpara);
+  D1pip(Dvar, D1);
   const double Mproton = 0.93827;
   double pre = - z * kt2 * Pt / (Mproton * Pt2);
   FF[0] = pre * x * (pow(2.0/3.0,2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0,2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->D1pim(Dvar, D1);
+  D1pim(Dvar, D1);
   FF[1] = pre * x * (pow(2.0/3.0,2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0,2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -891,12 +914,12 @@ int Lstructure::FUTsinHmSn(const double * var, double * FF, const double * fpara
   double f1t[6], D1[6];
   double fvar[2] = {x, Q2};
   double Dvar[2] = {z, Q2};
-  lst->f1tn(fvar, f1t, fpara);
-  lst->D1pip(Dvar, D1);
+  f1tn(fvar, f1t, fpara);
+  D1pip(Dvar, D1);
   const double Mneutron = 0.93957;
   double pre = - z * kt2 * Pt / (Mneutron * Pt2);
   FF[0] = pre * x * (pow(2.0/3.0,2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0,2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->D1pim(Dvar, D1);
+  D1pim(Dvar, D1);
   FF[1] = pre * x * (pow(2.0/3.0,2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0,2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -908,8 +931,8 @@ int Lstructure::FUTsinHmSN(const double * AZ, const double * var, double * FF, c
   double Polp = AZ[2];
   double Poln = AZ[3];
   double FFp[2], FFn[2];
-  lst->FUTsinHmSp(var, FFp, fpara, Dpara);
-  lst->FUTsinHmSn(var, FFn, fpara, Dpara);
+  FUTsinHmSp(var, FFp, fpara, Dpara);
+  FUTsinHmSn(var, FFn, fpara, Dpara);
   FF[0] = Np * Polp * FFp[0] + Nn * Poln * FFn[0];
   FF[1] = Np * Polp * FFp[1] + Nn * Poln * FFn[1];
   return 0;
@@ -933,10 +956,10 @@ int Lstructure::FUTsinHpSp(const double * var, double * FF, const double * hpara
   double h1[6], H1[6];
   const double Mpion = 0.13957;
   double pre = Pt * pt2 / (z * Mpion * Pt2);
-  lst->h1p(hvar, h1, hpara);
-  lst->H1pip(Hvar, H1, Hpara);
+  h1p(hvar, h1, hpara);
+  H1pip(Hvar, H1, Hpara);
   FF[0] = pre * x * (pow(2.0/3.0,2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0,2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->H1pim(Hvar, H1, Hpara);
+  H1pim(Hvar, H1, Hpara);
   FF[1] = pre * x * (pow(2.0/3.0,2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0,2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -959,10 +982,10 @@ int Lstructure::FUTsinHpSn(const double * var, double * FF, const double * hpara
   double h1[6], H1[6];
   const double Mpion = 0.13957;
   double pre = Pt * pt2 / (z * Mpion * Pt2);
-  lst->h1n(hvar, h1, hpara);
-  lst->H1pip(Hvar, H1, Hpara);
+  h1n(hvar, h1, hpara);
+  H1pip(Hvar, H1, Hpara);
   FF[0] = pre * x * (pow(2.0/3.0,2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0,2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->H1pim(Hvar, H1, Hpara);
+  H1pim(Hvar, H1, Hpara);
   FF[1] = pre * x * (pow(2.0/3.0,2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0,2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -974,8 +997,8 @@ int Lstructure::FUTsinHpSN(const double * AZ, const double * var, double * FF, c
   double Polp = AZ[2];
   double Poln = AZ[3];
   double FFp[2], FFn[2];
-  lst->FUTsinHpSp(var, FFp, hpara, Hpara);
-  lst->FUTsinHpSn(var, FFn, hpara, Hpara);
+  FUTsinHpSp(var, FFp, hpara, Hpara);
+  FUTsinHpSn(var, FFn, hpara, Hpara);
   FF[0] = Np * Polp * FFp[0] + Nn * Poln * FFn[0];
   FF[1] = Np * Polp * FFp[1] + Nn * Poln * FFn[1];
   return 0;
@@ -1001,10 +1024,10 @@ int Lstructure::FUTsin3HmSp(const double * var, double * FF, const double * hpar
   const double Mproton = 0.93827;
   const double Mpion = 0.13957;
   double pre = 0.5 * z * pow(kt2,2) * pt2 * pow(Pt,3) / (pow(Mproton,2) * Mpion * pow(Pt2,3));
-  lst->h1tp(hvar, h1t, hpara);
-  lst->H1pip(Hvar, H1, Hpara);
+  h1tp(hvar, h1t, hpara);
+  H1pip(Hvar, H1, Hpara);
   FF[0] = pre * x * (pow(2.0/3.0,2) * (h1t[0]*H1[0] + h1t[3]*H1[3]) + pow(1.0/3.0,2) * (h1t[1]*H1[1] + h1t[2]*H1[2] + h1t[4]*H1[4] + h1t[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->H1pim(Hvar, H1, Hpara);
+  H1pim(Hvar, H1, Hpara);
   FF[1] = pre * x * (pow(2.0/3.0,2) * (h1t[0]*H1[0] + h1t[3]*H1[3]) + pow(1.0/3.0,2) * (h1t[1]*H1[1] + h1t[2]*H1[2] + h1t[4]*H1[4] + h1t[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -1029,10 +1052,10 @@ int Lstructure::FUTsin3HmSn(const double * var, double * FF, const double * hpar
   const double Mneutron = 0.93957;
   const double Mpion = 0.13957;
   double pre = 0.5 * z * pow(kt2,2) * pt2 * pow(Pt,3) / (pow(Mneutron,2) * Mpion * pow(Pt2,3));
-  lst->h1tn(hvar, h1t, hpara);
-  lst->H1pip(Hvar, H1, Hpara);
+  h1tn(hvar, h1t, hpara);
+  H1pip(Hvar, H1, Hpara);
   FF[0] = pre * x * (pow(2.0/3.0,2) * (h1t[0]*H1[0] + h1t[3]*H1[3]) + pow(1.0/3.0,2) * (h1t[1]*H1[1] + h1t[2]*H1[2] + h1t[4]*H1[4] + h1t[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  lst->H1pim(Hvar, H1, Hpara);
+  H1pim(Hvar, H1, Hpara);
   FF[1] = pre * x * (pow(2.0/3.0,2) * (h1t[0]*H1[0] + h1t[3]*H1[3]) + pow(1.0/3.0,2) * (h1t[1]*H1[1] + h1t[2]*H1[2] + h1t[4]*H1[4] + h1t[5]*H1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
@@ -1044,8 +1067,8 @@ int Lstructure::FUTsin3HmSN(const double * AZ, const double * var, double * FF, 
   double Polp = AZ[2];
   double Poln = AZ[3];
   double FFp[2], FFn[2];
-  lst->FUTsin3HmSp(var, FFp, hpara, Hpara);
-  lst->FUTsin3HmSn(var, FFn, hpara, Hpara);
+  FUTsin3HmSp(var, FFp, hpara, Hpara);
+  FUTsin3HmSn(var, FFn, hpara, Hpara);
   FF[0] = Np * Polp * FFp[0] + Nn * Poln * FFn[0];
   FF[1] = Np * Polp * FFp[1] + Nn * Poln * FFn[1];
   return 0;
@@ -1078,13 +1101,13 @@ int Lstructure::FUTsinSp(const double * var, double * FF, const double * fpara =
   const double Mpion = 0.13957;
   double Apre = -0.5 * (Akt2 * (Apt2 * APt2 + z*z*Akt2 * pow(Pt,2))) / (Mproton*Mproton * pow(APt2,2));
   double Bpre = - ( Bkt2 * Bpt2 * (pow(Pt,2) - BPt2)) / (Mproton*Mpion * pow(BPt2,2));
-  lst->f1tp(fvar, f1t, fpara);
-  lst->h1p(fvar, h1, hpara);
-  lst->D1pip(Dvar, D1);
-  lst->H1pip(Dvar, H1, Hpara);
+  f1tp(fvar, f1t, fpara);
+  h1p(fvar, h1, hpara);
+  D1pip(Dvar, D1);
+  H1pip(Dvar, H1, Hpara);
   FF[0] = 2.0*Mproton / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0, 2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0, 2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi+
-  lst->D1pim(Dvar, D1);
-  lst->H1pim(Dvar, H1, Hpara);
+  D1pim(Dvar, D1);
+  H1pim(Dvar, H1, Hpara);
   FF[1] = 2.0*Mproton / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0, 2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0, 2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi-
   return 0;
 }
@@ -1116,13 +1139,13 @@ int Lstructure::FUTsinSn(const double * var, double * FF, const double * fpara =
   const double Mpion = 0.13957;
   double Apre = -0.5 * (Akt2 * (Apt2 * APt2 + z*z*Akt2 * pow(Pt,2))) / (Mneutron*Mneutron * pow(APt2,2));
   double Bpre = - ( Bkt2 * Bpt2 * (pow(Pt,2) - BPt2)) / (Mneutron*Mpion * pow(BPt2,2));
-  lst->f1tn(fvar, f1t, fpara);
-  lst->h1n(fvar, h1, hpara);
-  lst->D1pip(Dvar, D1);
-  lst->H1pip(Dvar, H1, Hpara);
+  f1tn(fvar, f1t, fpara);
+  h1n(fvar, h1, hpara);
+  D1pip(Dvar, D1);
+  H1pip(Dvar, H1, Hpara);
   FF[0] = 2.0*Mneutron / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0, 2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0, 2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi+
-  lst->D1pim(Dvar, D1);
-  lst->H1pim(Dvar, H1, Hpara);
+  D1pim(Dvar, D1);
+  H1pim(Dvar, H1, Hpara);
   FF[1] = 2.0*Mneutron / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1t[0]*D1[0] + f1t[3]*D1[3]) + pow(1.0/3.0, 2) * (f1t[1]*D1[1] + f1t[2]*D1[2] + f1t[4]*D1[4] + f1t[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (h1[0]*H1[0] + h1[3]*H1[3]) + pow(1.0/3.0, 2) * (h1[1]*H1[1] + h1[2]*H1[2] + h1[4]*H1[4] + h1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi-
   return 0;
 }
@@ -1134,8 +1157,8 @@ int Lstructure::FUTsinSN(const double * AZ, const double * var, double * FF, con
   double Polp = AZ[2];
   double Poln = AZ[3];
   double FFp[2], FFn[2];
-  lst->FUTsinSp(var, FFp, fpara, Dpara, hpara, Hpara);
-  lst->FUTsinSn(var, FFn, fpara, Dpara, hpara, Hpara);
+  FUTsinSp(var, FFp, fpara, Dpara, hpara, Hpara);
+  FUTsinSn(var, FFn, fpara, Dpara, hpara, Hpara);
   FF[0] = Np * Polp * FFp[0] + Nn * Poln * FFn[0];
   FF[1] = Np * Polp * FFp[1] + Nn * Poln * FFn[1];
   return 0;
@@ -1145,8 +1168,8 @@ int Lstructure::AsinHmSp(const double * kin, double * Asym, const double * Tf = 
   //kin: x, y, z, Q2, Pt
   double var[4] = {kin[0], kin[3], kin[2], kin[4]};
   double FFT[2], FFU[2];
-  lst->FUTsinHmSp(var, FFT, Tf, TD);
-  lst->FUUTp(var, FFU, Uf, UD);
+  FUTsinHmSp(var, FFT, Tf, TD);
+  FUUTp(var, FFU, Uf, UD);
   Asym[0] = FFT[0] / FFU[0];//pi+
   Asym[1] = FFT[1] / FFU[1];//pi-
   return 0;
@@ -1156,8 +1179,8 @@ int Lstructure::AsinHmSn(const double * kin, double * Asym, const double * Tf = 
   //kin: x, y, z, Q2, Pt
   double var[4] = {kin[0], kin[3], kin[2], kin[4]};
   double FFT[2], FFU[2];
-  lst->FUTsinHmSn(var, FFT, Tf, TD);
-  lst->FUUTn(var, FFU, Uf, UD);
+  FUTsinHmSn(var, FFT, Tf, TD);
+  FUUTn(var, FFU, Uf, UD);
   Asym[0] = FFT[0] / FFU[0];//pi+
   Asym[1] = FFT[1] / FFU[1];//pi-
   return 0;
@@ -1167,8 +1190,8 @@ int Lstructure::AsinHmSN(const double * AZ, const double * kin, double * Asym, c
   //kin: x, y, z, Q2, Pt
   double var[4] = {kin[0], kin[3], kin[2], kin[4]};
   double FFT[2], FFU[2];
-  lst->FUTsinHmSN(AZ, var, FFT, Tf, TD);
-  lst->FUUTN(AZ, var, FFU, Uf, UD);
+  FUTsinHmSN(AZ, var, FFT, Tf, TD);
+  FUUTN(AZ, var, FFU, Uf, UD);
   Asym[0] = FFT[0] / FFU[0];//pi+
   Asym[1] = FFT[1] / FFU[1];//pi-
   return 0;
@@ -1182,8 +1205,8 @@ int Lstructure::AsinHpSp(const double * kin, double * Asym, const double * Tf = 
   double gamma = 2.0 * Mnucleon * var[0] / sqrt(var[1]);
   double eps = (1.0 - y - 0.25*pow(y*gamma,2)) / (1.0 - y + 0.5*y*y + 0.25*pow(y*gamma,2));
   double FFT[2], FFU[2];
-  lst->FUTsinHpSp(var, FFT, Tf, TD);
-  lst->FUUTp(var, FFU, Uf, UD);
+  FUTsinHpSp(var, FFT, Tf, TD);
+  FUUTp(var, FFU, Uf, UD);
   Asym[0] = eps * FFT[0] / FFU[0];//pi+
   Asym[1] = eps * FFT[1] / FFU[1];//pi-
   return 0;
@@ -1197,8 +1220,8 @@ int Lstructure::AsinHpSn(const double * kin, double * Asym, const double * Tf = 
   double gamma = 2.0 * Mnucleon * var[0] / sqrt(var[1]);
   double eps = (1.0 - y - 0.25*pow(y*gamma,2)) / (1.0 - y + 0.5*y*y + 0.25*pow(y*gamma,2));
   double FFT[2], FFU[2];
-  lst->FUTsinHpSn(var, FFT, Tf, TD);
-  lst->FUUTn(var, FFU, Uf, UD);
+  FUTsinHpSn(var, FFT, Tf, TD);
+  FUUTn(var, FFU, Uf, UD);
   Asym[0] = eps * FFT[0] / FFU[0];//pi+
   Asym[1] = eps * FFT[1] / FFU[1];//pi-
   return 0;
@@ -1212,8 +1235,8 @@ int Lstructure::AsinHpSN(const double * AZ, const double * kin, double * Asym, c
   double gamma = 2.0 * Mnucleon * var[0] / sqrt(var[1]);
   double eps = (1.0 - y - 0.25*pow(y*gamma,2)) / (1.0 - y + 0.5*y*y + 0.25*pow(y*gamma,2));
   double FFT[2], FFU[2];
-  lst->FUTsinHpSN(AZ, var, FFT, Tf, TD);
-  lst->FUUTN(AZ, var, FFU, Uf, UD);
+  FUTsinHpSN(AZ, var, FFT, Tf, TD);
+  FUUTN(AZ, var, FFU, Uf, UD);
   Asym[0] = eps * FFT[0] / FFU[0];//pi+
   Asym[1] = eps * FFT[1] / FFU[1];//pi-
   return 0;
@@ -1227,8 +1250,8 @@ int Lstructure::Asin3HmSp(const double * kin, double * Asym, const double * Tf =
   double gamma = 2.0 * Mnucleon * var[0] / sqrt(var[1]);
   double eps = (1.0 - y - 0.25*pow(y*gamma,2)) / (1.0 - y + 0.5*y*y + 0.25*pow(y*gamma,2));
   double FFT[2], FFU[2];
-  lst->FUTsin3HmSp(var, FFT, Tf, TD);
-  lst->FUUTp(var, FFU, Uf, UD);
+  FUTsin3HmSp(var, FFT, Tf, TD);
+  FUUTp(var, FFU, Uf, UD);
   Asym[0] = eps * FFT[0] / FFU[0];//pi+
   Asym[1] = eps * FFT[1] / FFU[1];//pi-
   return 0;
@@ -1242,8 +1265,8 @@ int Lstructure::Asin3HmSn(const double * kin, double * Asym, const double * Tf =
   double gamma = 2.0 * Mnucleon * var[0] / sqrt(var[1]);
   double eps = (1.0 - y - 0.25*pow(y*gamma,2)) / (1.0 - y + 0.5*y*y + 0.25*pow(y*gamma,2));
   double FFT[2], FFU[2];
-  lst->FUTsin3HmSn(var, FFT, Tf, TD);
-  lst->FUUTn(var, FFU, Uf, UD);
+  FUTsin3HmSn(var, FFT, Tf, TD);
+  FUUTn(var, FFU, Uf, UD);
   Asym[0] = eps * FFT[0] / FFU[0];//pi+
   Asym[1] = eps * FFT[1] / FFU[1];//pi-
   return 0;
@@ -1257,8 +1280,8 @@ int Lstructure::Asin3HmSN(const double * AZ, const double * kin, double * Asym, 
   double gamma = 2.0 * Mnucleon * var[0] / sqrt(var[1]);
   double eps = (1.0 - y - 0.25*pow(y*gamma,2)) / (1.0 - y + 0.5*y*y + 0.25*pow(y*gamma,2));
   double FFT[2], FFU[2];
-  lst->FUTsin3HmSN(AZ, var, FFT, Tf, TD);
-  lst->FUUTN(AZ, var, FFU, Uf, UD);
+  FUTsin3HmSN(AZ, var, FFT, Tf, TD);
+  FUUTN(AZ, var, FFU, Uf, UD);
   Asym[0] = eps * FFT[0] / FFU[0];//pi+
   Asym[1] = eps * FFT[1] / FFU[1];//pi-
   return 0;
@@ -1346,12 +1369,12 @@ double Lstructure::Jacobian(const double * lab){
 
 int Lstructure::sigmaUUTp(const double * lab, double * xs, const double * fpara = 0, const double * Dpara = 0){
   double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
-  lst->CalcVariables(lab, phys);
+  CalcVariables(lab, phys);
   double var[4] = {phys[0], phys[3], phys[2], phys[4]};
   double FF[2];
-  lst->FUUTp(var, FF, fpara, Dpara);
-  double pre = lst->xsprefactor(phys);
-  double jac = lst->Jacobian(lab);
+  FUUTp(var, FF, fpara, Dpara);
+  double pre = xsprefactor(phys);
+  double jac = Jacobian(lab);
   xs[0] = jac * pre * FF[0];//pi+
   xs[1] = jac * pre * FF[1];//pi-
   return 0;
@@ -1359,12 +1382,12 @@ int Lstructure::sigmaUUTp(const double * lab, double * xs, const double * fpara 
 
 int Lstructure::sigmaUUTn(const double * lab, double * xs, const double * fpara = 0, const double * Dpara = 0){
   double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
-  lst->CalcVariables(lab, phys);
+  CalcVariables(lab, phys);
   double var[4] = {phys[0], phys[3], phys[2], phys[4]};
   double FF[2];
-  lst->FUUTn(var, FF, fpara, Dpara);
-  double pre = lst->xsprefactor(phys);
-  double jac = lst->Jacobian(lab);
+  FUUTn(var, FF, fpara, Dpara);
+  double pre = xsprefactor(phys);
+  double jac = Jacobian(lab);
   xs[0] = jac * pre * FF[0];//pi+
   xs[1] = jac * pre * FF[1];//pi-
   return 0;
@@ -1372,12 +1395,12 @@ int Lstructure::sigmaUUTn(const double * lab, double * xs, const double * fpara 
 
 int Lstructure::sigmaUUT(const double * AZ, const double * lab, double * xs, const double * fpara = 0, const double * Dpara = 0){
   double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
-  lst->CalcVariables(lab, phys);
+  CalcVariables(lab, phys);
   double var[4] = {phys[0], phys[3], phys[2], phys[4]};
   double FF[2];
-  lst->FUUTN(AZ, var, FF, fpara, Dpara);
-  double pre = lst->xsprefactor(phys);
-  double jac = lst->Jacobian(lab);
+  FUUTN(AZ, var, FF, fpara, Dpara);
+  double pre = xsprefactor(phys);
+  double jac = Jacobian(lab);
   xs[0] = jac * pre * FF[0];//pi+
   xs[1] = jac * pre * FF[1];//pi-
   return 0;
