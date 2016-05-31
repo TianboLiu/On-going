@@ -20,23 +20,27 @@
 #include "TEventList.h"
 
 #include "wiser.h"
-#include "dis.h"
 
 #include "Lgenerator.h"
 #include "Lstructure.h"
 
 class Lanalysis{
  protected:
-  double ST;
-  double lumi;
-  double timewindow;
-  double Pn;
-  double Pp;
+  TString _datadir;
+  TString _binfile1;
+  TString _binfile2;
+  double _eff;
+  double _ST;
+  double _lumi;
+  double _days;
+  double _simdensity;
+  int _Ntree;
  public:
-  Lanalysis(double st);
+  Lanalysis(TString datadir, TString binfile1, TString binfile2);
   static int MakeBinInfoTree(const char bininfo[], const char bintree[], const double E0);
-  int getsimulationinfo(const char datadir[], double * Nsim, double * genvol, double * days);
-  int binanalysis(const char bintreep[], const char bintreem[], const char sidis[], const char datadir[], const int Ntree);
+  int SetSimInfo(double lumi, double days, double ST, int Ntree);
+  int BinAnalysisNeutron(const char savefile[]);
+  int BinAnalysisProton(const char savefile[]);
   int ThreetermMatrix(const double * hr, double * M3inv);
   double Threeterm1(const double * coef, const double * phih);
   double Threeterm2(const double * coef, const double * phi);
@@ -55,16 +59,10 @@ class Lanalysis{
   double RandomCoincidentSigma(const double * lab, int hadron);
 };
 
-Lanalysis * lan;
-Lanalysis glan(0.7);
-
-Lanalysis::Lanalysis(double st){
-  ST = 0.7;
-  lumi = 0.1e+10 * pow(0.197327,2);//Polarized Proton
-  //0.0334~NH3, 0.01825~4He, 0.3705~total proton, 0.2703~total neutron
-  timewindow = 6.0e-9;
-  Pn = 0;
-  Pp = 1;
+Lanalysis::Lanalysis(TString datadir, TString binfile1, TString binfile2){
+  _datadir = datadir;
+  _binfile1 = binfile1;
+  _binfile2 = binfile2;
 }
 
 int Lanalysis::MakeBinInfoTree(const char bininfo[], const char bintree[], const double E0 = 11.0){
@@ -102,36 +100,43 @@ int Lanalysis::MakeBinInfoTree(const char bininfo[], const char bintree[], const
   return 0;
 }
 
-int Lanalysis::getsimulationinfo(const char datadir[], double * Nsim, double * genvol, double * days){
-  TString datadirectory = datadir;
-  TString filename = datadirectory+"/out00/run.dat";
+int Lanalysis::SetSimInfo(double lumi, double days, double ST, int Ntree){
+  _eff = 0.85;
+  _lumi = lumi;
+  _days = days;
+  _ST = ST;
+  _Ntree = Ntree;
+  TString filename = _datadir+"/out00/run.dat";
+  ifstream infile(filename);
   double run[11];
-  //lge->setrange(run, filename);
-  Nsim[0] = run[0];
-  genvol[0] = run[10];
-  double E0 = run[9];
-  if (E0 == 11.0) days[0] = 55.0;
-  if (E0 == 8.8)  days[0] = 27.5;
+  if (!infile.is_open()){
+    std::cout << "Run file does not exist!" << std::endl;
+    return 1;
+  }
+  TString temp;
+  int i = 0;
+  while (infile >> temp >> run[i]){i++;}
+  infile.close();
+  double genvol = (run[2] - run[1]) * (cos(run[3] * M_PI / 180.0) - cos(run[4] * M_PI / 180.0)) * (run[6] - run[5]) * (cos(run[7] * M_PI / 180.0) - cos(run[8] * M_PI / 180.0)) * (2.0 * M_PI) * (2.0 * M_PI);
+  _simdensity = run[0] / genvol * Ntree;
   return 0;
-}
+}  
 
-int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const char sidis[], const char datadir[], const int Ntree = 5){
-  TString bininfotreep = bintreep;
-  TString bininfotreem = bintreem;
-  TString datadirectory = datadir;
-  TFile * fbinp = new TFile(bininfotreep,"r");
+int Lanalysis::BinAnalysisNeutron(const char savefile[]){
+  TFile * fbinp = new TFile(_binfile1,"r");
   if (!fbinp->IsOpen()){
     std::cout << "Lanalysis::binanalysis: Bin info file does not exist!" << std::endl;
     return 1;
   }
-  TFile * fbinm = new TFile(bininfotreem,"r");
+  TFile * fbinm = new TFile(_binfile2,"r");
   if (!fbinm->IsOpen()){
     std::cout << "Lanalysis::binanalysis: Bin info file does not exist!" << std::endl;
     return 1;
   }
   TTree * Fbinp = (TTree *) fbinp->GetObjectChecked("bin", "TTree");
   TTree * Fbinm = (TTree *) fbinm->GetObjectChecked("bin", "TTree");
-  int Nbin = Fbinp->GetEntries();
+  int Nbinp = Fbinp->GetEntries();
+  int Nbinm = Fbinm->GetEntries();
   double Ebeam;
   double xl, xu, xm, ym;
   double Q2l, Q2u, Q2m;
@@ -156,17 +161,19 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
   Fbinm->SetBranchAddress("zu", &zu);
   Fbinm->SetBranchAddress("Ptl", &Ptl);
   Fbinm->SetBranchAddress("Ptu", &Ptu);
-  double ha, hb;
-  double fp, fNH3;
-  double A1[2], A1p[2], A1NH3[2];
-  double A2[2], A2p[2], A2NH3[2];
-  double A3[2], A3p[2], A3NH3[2];  
-  TString sidisbinfile = sidis;
-  TFile * fs = new TFile(sidisbinfile,"RECREATE");
+  double BinNumber, Nsim;
+  double ha, hb, fn;
+  double A1[2], A1p[2], A1n[2];
+  double A2[2], A2p[2], A2n[2];
+  double A3[2], A3p[2], A3n[2];
+  double Estat[3];
+  TFile * fs = new TFile(savefile,"RECREATE");
   TTree * Tp = new TTree("binplus","binplus");
   Tp->SetDirectory(fs);
   TTree * Tm = new TTree("binminus","binminus");
   Tm->SetDirectory(fs);
+  Tp->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Tp->Branch("Nsim", &Nsim, "Nsim/D");
   Tp->Branch("Ebeam", &Ebeam, "Ebeam/D");
   Tp->Branch("xl", &xl, "xl/D");
   Tp->Branch("xu", &xu, "xu/D");
@@ -183,18 +190,22 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
   Tp->Branch("Ptm", &Ptm, "Ptm/D");
   Tp->Branch("ha", &ha, "ha/D");
   Tp->Branch("hb", &hb, "hb/D");
-  Tp->Branch("fp", &fp, "fp/D");
-  Tp->Branch("fNH3", &fNH3, "fNH3/D");
+  Tp->Branch("fn", &fn, "fn/D");
   Tp->Branch("A1", &A1[0], "A1/D");
   Tp->Branch("A2", &A2[0], "A2/D");
   Tp->Branch("A3", &A3[0], "A3/D");
   Tp->Branch("A1p", &A1p[0], "A1p/D");
   Tp->Branch("A2p", &A2p[0], "A2p/D");
   Tp->Branch("A3p", &A3p[0], "A3p/D");
-  Tp->Branch("A1NH3", &A1NH3[0], "A1NH3/D");
-  Tp->Branch("A2NH3", &A2NH3[0], "A2NH3/D");
-  Tp->Branch("A3NH3", &A3NH3[0], "A3NH3/D");
+  Tp->Branch("A1n", &A1n[0], "A1n/D");
+  Tp->Branch("A2n", &A2n[0], "A2n/D");
+  Tp->Branch("A3n", &A3n[0], "A3n/D");
   Tp->Branch("Nacc", &Nacc, "Nacc/D");
+  Tp->Branch("E1stat", &Estat[0], "E1stat/D");
+  Tp->Branch("E2stat", &Estat[1], "E2stat/D");
+  Tp->Branch("E3stat", &Estat[2], "E3stat/D");
+  Tm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Tm->Branch("Nsim", &Nsim, "Nsim/D");
   Tm->Branch("Ebeam", &Ebeam, "Ebeam/D");
   Tm->Branch("xl", &xl, "xl/D");
   Tm->Branch("xu", &xu, "xu/D");
@@ -211,6 +222,346 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
   Tm->Branch("Ptm", &Ptm, "Ptm/D");
   Tm->Branch("ha", &ha, "ha/D");
   Tm->Branch("hb", &hb, "hb/D");
+  Tm->Branch("fn", &fn, "fn/D");
+  Tm->Branch("A1", &A1[1], "A1/D");
+  Tm->Branch("A2", &A2[1], "A2/D");
+  Tm->Branch("A3", &A3[1], "A3/D");
+  Tm->Branch("A1p", &A1p[1], "A1p/D");
+  Tm->Branch("A2p", &A2p[1], "A2p/D");
+  Tm->Branch("A3p", &A3p[1], "A3p/D");
+  Tm->Branch("A1n", &A1n[1], "A1n/D");
+  Tm->Branch("A2n", &A2n[1], "A2n/D");
+  Tm->Branch("A3n", &A3n[1], "A3n/D");
+  Tm->Branch("Nacc", &Nacc, "Nacc/D");
+  Tm->Branch("E1stat", &Estat[0], "E1stat/D");
+  Tm->Branch("E2stat", &Estat[1], "E2stat/D");
+  Tm->Branch("E3stat", &Estat[2], "E3stat/D");
+  double acc_ele, acc_pion[2];
+  double sigmaN[2], sigman[2];
+  double AZ[4] = {2, 1, -0.028, 0.86};//total
+  TString nq, nz;
+  TString selectedfile;
+  Long64_t Nevent;
+  double kin[7], lab[7];
+  std::cout << "bin analysis: pi+" << std::endl;
+  //for (int nb = 612; nb < 613; nb++){
+  for (int nb = 0; nb < Nbinp; nb++){
+    Fbinp->GetEntry(nb);
+    BinNumber = nb;
+    std::cout << "#" << nb << " in " << Nbinp << std::endl;
+    if (Q2l == 1.0 && Q2u == 2.0) nq = "1";
+    else if (Q2l == 2.0 && Q2u == 3.0) nq = "2";
+    else if (Q2l == 3.0 && Q2u == 4.0) nq = "3";
+    else if (Q2l == 4.0 && Q2u == 5.0) nq = "4";
+    else if (Q2l == 5.0 && Q2u == 6.0) nq = "5";
+    else if (Q2l == 6.0 && Q2u == 8.0) nq = "6";
+    else continue;
+    if (zl == 0.3 && zu == 0.35) nz = "30";
+    else if (zl == 0.35 && zu == 0.40) nz = "35";
+    else if (zl == 0.40 && zu == 0.45) nz = "40";
+    else if (zl == 0.45 && zu == 0.50) nz = "45";
+    else if (zl == 0.50 && zu == 0.55) nz = "50";
+    else if (zl == 0.55 && zu == 0.60) nz = "55";
+    else if (zl == 0.60 && zu == 0.65) nz = "60";
+    else if (zl == 0.65 && zu == 0.70) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &kin[0]);
+    Tdata->SetBranchAddress("y", &kin[1]);
+    Tdata->SetBranchAddress("z", &kin[2]);
+    Tdata->SetBranchAddress("Q2", &kin[3]);
+    Tdata->SetBranchAddress("Pt", &kin[4]);
+    Tdata->SetBranchAddress("phi_h", &kin[5]);
+    Tdata->SetBranchAddress("phi_S", &kin[6]);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * hsim = new TH1D("hsim", "hsim", 1, 0.0, M_PI);
+    TH1D * h0p = new TH1D("h0p", "h0p", 180, 0.0, M_PI);
+    TH1D * hnp = new TH1D("hnp", "hnp", 1, 0.0, M_PI);
+    TH1D * hxp = new TH1D("hxp", "hxp", 1, 0.0, M_PI);
+    TH1D * hyp = new TH1D("hyp", "hyp", 1, 0.0, M_PI);
+    TH1D * hzp = new TH1D("hzp", "hzp", 1, 0.0, M_PI);
+    TH1D * hQ2p = new TH1D("hQ2p", "hQ2p", 1, 0.0, M_PI);
+    TH1D * hPtp = new TH1D("hPtp", "hPtp", 1, 0.0, M_PI);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (kin[4] < Ptl || kin[4] > Ptu) continue;
+      if (kin[0] < xl || kin[0] > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigmaN);
+      Lstructure::sigmaUUTn(lab, sigman);
+      hsim->Fill(std::abs(kin[5]),1);
+      h0p->Fill(std::abs(kin[5]), sigmaN[0]*acc_ele*acc_pion[0]);
+      hnp->Fill(std::abs(kin[5]), sigman[0]*acc_ele*acc_pion[0]);
+      hxp->Fill(std::abs(kin[5]), kin[0]*sigmaN[0]*acc_ele*acc_pion[0]);
+      hyp->Fill(std::abs(kin[5]), kin[1]*sigmaN[0]*acc_ele*acc_pion[0]);
+      hzp->Fill(std::abs(kin[5]), kin[2]*sigmaN[0]*acc_ele*acc_pion[0]);
+      hQ2p->Fill(std::abs(kin[5]), kin[3]*sigmaN[0]*acc_ele*acc_pion[0]);
+      hPtp->Fill(std::abs(kin[5]), kin[4]*sigmaN[0]*acc_ele*acc_pion[0]);
+    }
+    Nsim = hsim->Integral(1, -1);
+    Nacc = h0p->Integral(1, -1) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
+    std::cout << Nsim << "  " << Nacc << std::endl;
+    if (Nacc > 1.0e+5){
+      fn = hnp->Integral(1,-1) / h0p->Integral(1,-1);
+      xm = hxp->Integral(1,-1) / h0p->Integral(1,-1);
+      ym = hyp->Integral(1,-1) / h0p->Integral(1,-1);
+      zm = hzp->Integral(1,-1) / h0p->Integral(1,-1);
+      Q2m = hQ2p->Integral(1,-1) / h0p->Integral(1,-1);
+      Ptm = hPtp->Integral(1,-1) / h0p->Integral(1,-1);
+      if (h0p->FindFirstBinAbove(1e-9) == 1) ha = 0.0;
+      else ha = h0p->GetBinCenter(h0p->FindFirstBinAbove(1e-9));
+      if (h0p->FindLastBinAbove(1e-9) == 180) hb = M_PI;
+      else hb = h0p->GetBinCenter(h0p->FindLastBinAbove(1e-9));
+      kin[0] = xm;
+      kin[1] = ym;
+      kin[2] = zm;
+      kin[3] = Q2m;
+      kin[4] = Ptm;
+      Lstructure::AsinHmSN(AZ, kin, A1); 
+      Lstructure::AsinHmSp(kin, A1p);
+      Lstructure::AsinHmSn(kin, A1n);
+      Lstructure::AsinHpSN(AZ, kin, A2); 
+      Lstructure::AsinHpSp(kin, A2p);
+      Lstructure::AsinHpSn(kin, A2n);
+      Lstructure::Asin3HmSN(AZ, kin, A3); 
+      Lstructure::Asin3HmSp(kin, A3p);
+      Lstructure::Asin3HmSn(kin, A3n);
+      EStatisticsUT3(h0p, Estat);
+      Tp->Fill();
+    }
+    hsim->Delete();
+    h0p->Delete();
+    hnp->Delete();
+    hxp->Delete();
+    hyp->Delete();
+    hzp->Delete();
+    hQ2p->Delete();
+    hPtp->Delete();
+    Tdata->Delete();
+  }
+  std::cout << "bin analysis: pi-" << std::endl;
+  //for (int nb = 0; nb < 1; nb++){
+  for (int nb = 0; nb < Nbinm; nb++){
+    Fbinm->GetEntry(nb);
+    BinNumber = nb;
+    std::cout << "#" << nb << " in " << Nbinm << std::endl;
+    if (Q2l == 1.0 && Q2u == 2.0) nq = "1";
+    else if (Q2l == 2.0 && Q2u == 3.0) nq = "2";
+    else if (Q2l == 3.0 && Q2u == 4.0) nq = "3";
+    else if (Q2l == 4.0 && Q2u == 5.0) nq = "4";
+    else if (Q2l == 5.0 && Q2u == 6.0) nq = "5";
+    else if (Q2l == 6.0 && Q2u == 8.0) nq = "6";
+    else continue;
+    if (zl == 0.3 && zu == 0.35) nz = "30";
+    else if (zl == 0.35 && zu == 0.40) nz = "35";
+    else if (zl == 0.40 && zu == 0.45) nz = "40";
+    else if (zl == 0.45 && zu == 0.50) nz = "45";
+    else if (zl == 0.50 && zu == 0.55) nz = "50";
+    else if (zl == 0.55 && zu == 0.60) nz = "55";
+    else if (zl == 0.60 && zu == 0.65) nz = "60";
+    else if (zl == 0.65 && zu == 0.70) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &kin[0]);
+    Tdata->SetBranchAddress("y", &kin[1]);
+    Tdata->SetBranchAddress("z", &kin[2]);
+    Tdata->SetBranchAddress("Q2", &kin[3]);
+    Tdata->SetBranchAddress("Pt", &kin[4]);
+    Tdata->SetBranchAddress("phi_h", &kin[5]);
+    Tdata->SetBranchAddress("phi_S", &kin[6]);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * hsim = new TH1D("hsim", "hsim", 1, 0.0, M_PI);
+    TH1D * h0m = new TH1D("h0m", "h0m", 180, 0.0, M_PI);
+    TH1D * hnm = new TH1D("hnm", "hnm", 1, 0.0, M_PI);
+    TH1D * hxm = new TH1D("hxm", "hxm", 1, 0.0, M_PI);
+    TH1D * hym = new TH1D("hym", "hym", 1, 0.0, M_PI);
+    TH1D * hzm = new TH1D("hzm", "hzm", 1, 0.0, M_PI);
+    TH1D * hQ2m = new TH1D("hQ2m", "hQ2m", 1, 0.0, M_PI);
+    TH1D * hPtm = new TH1D("hPtm", "hPtm", 1, 0.0, M_PI);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (kin[4] < Ptl || kin[4] > Ptu) continue;
+      if (kin[0] < xl || kin[0] > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigmaN);
+      Lstructure::sigmaUUTn(lab, sigman);
+      hsim->Fill(std::abs(kin[5]), 1);
+      h0m->Fill(std::abs(kin[5]), sigmaN[1]*acc_ele*acc_pion[1]);
+      hnm->Fill(std::abs(kin[5]), sigman[1]*acc_ele*acc_pion[1]);
+      hxm->Fill(std::abs(kin[5]), kin[0]*sigmaN[1]*acc_ele*acc_pion[1]);
+      hym->Fill(std::abs(kin[5]), kin[1]*sigmaN[1]*acc_ele*acc_pion[1]);
+      hzm->Fill(std::abs(kin[5]), kin[2]*sigmaN[1]*acc_ele*acc_pion[1]);
+      hQ2m->Fill(std::abs(kin[5]), kin[3]*sigmaN[1]*acc_ele*acc_pion[1]);
+      hPtm->Fill(std::abs(kin[5]), kin[4]*sigmaN[1]*acc_ele*acc_pion[1]);
+    }
+    Nsim = hsim->Integral(1, -1);
+    Nacc = h0m->Integral(1, -1) *_eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
+    std::cout << Nsim << "  " << Nacc << std::endl;
+    if (Nacc > 1.0e+5){
+      fn = hnm->Integral(1, -1) / h0m->Integral(1, -1);
+      xm = hxm->Integral(1, -1) / h0m->Integral(1, -1);
+      ym = hym->Integral(1, -1) / h0m->Integral(1, -1);
+      zm = hzm->Integral(1, -1) / h0m->Integral(1, -1);
+      Q2m = hQ2m->Integral(1, -1) / h0m->Integral(1, -1);
+      Ptm = hPtm->Integral(1, -1) / h0m->Integral(1, -1);
+      if (h0m->FindFirstBinAbove(1e-9) == 1) ha = 0.0;
+      else ha = h0m->GetBinCenter(h0m->FindFirstBinAbove(1e-9));
+      if (h0m->FindLastBinAbove(1e-9) == 180) hb = M_PI;
+      else hb = h0m->GetBinCenter(h0m->FindLastBinAbove(1e-9));
+      kin[0] = xm;
+      kin[1] = ym;
+      kin[2] = zm;
+      kin[3] = Q2m;
+      kin[4] = Ptm;
+      Lstructure::AsinHmSN(AZ, kin, A1); 
+      Lstructure::AsinHmSp(kin, A1p); 
+      Lstructure::AsinHmSn(kin, A1n);
+      Lstructure::AsinHpSN(AZ, kin, A2); 
+      Lstructure::AsinHpSp(kin, A2p); 
+      Lstructure::AsinHpSn(kin, A2n);
+      Lstructure::Asin3HmSN(AZ, kin, A3); 
+      Lstructure::Asin3HmSp(kin, A3p); 
+      Lstructure::Asin3HmSn(kin, A3n);
+      EStatisticsUT3(h0m, Estat);
+      Tm->Fill();
+    }
+    hsim->Delete();
+    h0m->Delete();
+    hnm->Delete();
+    hxm->Delete();
+    hym->Delete();
+    hzm->Delete();
+    hQ2m->Delete();
+    hPtm->Delete();
+    Tdata->Delete();
+  }
+  fs->Write();
+  return 0;
+}
+
+int Lanalysis::BinAnalysisProton(const char savefile[]){
+  TFile * fbinp = new TFile(_binfile1,"r");
+  if (!fbinp->IsOpen()){
+    std::cout << "Lanalysis::binanalysis: Bin info file does not exist!" << std::endl;
+    return 1;
+  }
+  TFile * fbinm = new TFile(_binfile2,"r");
+  if (!fbinm->IsOpen()){
+    std::cout << "Lanalysis::binanalysis: Bin info file does not exist!" << std::endl;
+    return 1;
+  }
+  TTree * Fbinp = (TTree *) fbinp->GetObjectChecked("bin", "TTree");
+  TTree * Fbinm = (TTree *) fbinm->GetObjectChecked("bin", "TTree");
+  int Nbinp = Fbinp->GetEntries();
+  int Nbinm = Fbinm->GetEntries();
+  double Ebeam;
+  double xl, xu, xm, ym;
+  double Q2l, Q2u, Q2m;
+  double zl, zu, zm;
+  double Ptl, Ptu, Ptm;
+  double Nacc;
+  Fbinp->SetBranchAddress("Ebeam", &Ebeam);
+  Fbinp->SetBranchAddress("xl", &xl);
+  Fbinp->SetBranchAddress("xu", &xu);
+  Fbinp->SetBranchAddress("Q2l", &Q2l);
+  Fbinp->SetBranchAddress("Q2u", &Q2u);
+  Fbinp->SetBranchAddress("zl", &zl);
+  Fbinp->SetBranchAddress("zu", &zu);
+  Fbinp->SetBranchAddress("Ptl", &Ptl);
+  Fbinp->SetBranchAddress("Ptu", &Ptu);
+  Fbinm->SetBranchAddress("Ebeam", &Ebeam);
+  Fbinm->SetBranchAddress("xl", &xl);
+  Fbinm->SetBranchAddress("xu", &xu);
+  Fbinm->SetBranchAddress("Q2l", &Q2l);
+  Fbinm->SetBranchAddress("Q2u", &Q2u);
+  Fbinm->SetBranchAddress("zl", &zl);
+  Fbinm->SetBranchAddress("zu", &zu);
+  Fbinm->SetBranchAddress("Ptl", &Ptl);
+  Fbinm->SetBranchAddress("Ptu", &Ptu);
+  double BinNumber, Nsim;
+  double fp, fNH3;
+  double A1[2], A1p[2], A1NH3[2];
+  double A2[2], A2p[2], A2NH3[2];
+  double A3[2], A3p[2], A3NH3[2];
+  double Estat[3];
+  TFile * fs = new TFile(savefile,"RECREATE");
+  TTree * Tp = new TTree("binplus","binplus");
+  Tp->SetDirectory(fs);
+  TTree * Tm = new TTree("binminus","binminus");
+  Tm->SetDirectory(fs);
+  Tp->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Tp->Branch("Nsim", &Nsim, "Nsim/D");
+  Tp->Branch("Ebeam", &Ebeam, "Ebeam/D");
+  Tp->Branch("xl", &xl, "xl/D");
+  Tp->Branch("xu", &xu, "xu/D");
+  Tp->Branch("xm", &xm, "xm/D");
+  Tp->Branch("ym", &ym, "ym/D");
+  Tp->Branch("Q2l", &Q2l, "Q2l/D");
+  Tp->Branch("Q2u", &Q2u, "Q2u/D");
+  Tp->Branch("Q2m", &Q2m, "Q2m/D");
+  Tp->Branch("zl", &zl, "zl/D");
+  Tp->Branch("zu", &zu, "zu/D");
+  Tp->Branch("zm", &zm, "zm/D");
+  Tp->Branch("Ptl", &Ptl, "Ptl/D");
+  Tp->Branch("Ptu", &Ptu, "Ptu/D");
+  Tp->Branch("Ptm", &Ptm, "Ptm/D");
+  Tp->Branch("fp", &fp, "fp/D");
+  Tp->Branch("fNH3", &fNH3, "fNH3/D");
+  Tp->Branch("A1", &A1[0], "A1/D");
+  Tp->Branch("A2", &A2[0], "A2/D");
+  Tp->Branch("A3", &A3[0], "A3/D");
+  Tp->Branch("A1p", &A1p[0], "A1p/D");
+  Tp->Branch("A2p", &A2p[0], "A2p/D");
+  Tp->Branch("A3p", &A3p[0], "A3p/D");
+  Tp->Branch("A1NH3", &A1NH3[0], "A1NH3/D");
+  Tp->Branch("A2NH3", &A2NH3[0], "A2NH3/D");
+  Tp->Branch("A3NH3", &A3NH3[0], "A3NH3/D");
+  Tp->Branch("Nacc", &Nacc, "Nacc/D");
+  Tp->Branch("E1stat", &Estat[0], "E1stat/D");
+  Tp->Branch("E2stat", &Estat[1], "E2stat/D");
+  Tp->Branch("E3stat", &Estat[2], "E3stat/D");
+  Tm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Tm->Branch("Nsim", &Nsim, "Nsim/D");
+  Tm->Branch("Ebeam", &Ebeam, "Ebeam/D");
+  Tm->Branch("xl", &xl, "xl/D");
+  Tm->Branch("xu", &xu, "xu/D");
+  Tm->Branch("xm", &xm, "xm/D");
+  Tm->Branch("ym", &ym, "ym/D");
+  Tm->Branch("Q2l", &Q2l, "Q2l/D");
+  Tm->Branch("Q2u", &Q2u, "Q2u/D");
+  Tm->Branch("Q2m", &Q2m, "Q2m/D");
+  Tm->Branch("zl", &zl, "zl/D");
+  Tm->Branch("zu", &zu, "zu/D");
+  Tm->Branch("zm", &zm, "zm/D");
+  Tm->Branch("Ptl", &Ptl, "Ptl/D");
+  Tm->Branch("Ptu", &Ptu, "Ptu/D");
+  Tm->Branch("Ptm", &Ptm, "Ptm/D");
   Tm->Branch("fp", &fp, "fp/D");
   Tm->Branch("fNH3", &fNH3, "fNH3/D");
   Tm->Branch("A1", &A1[1], "A1/D");
@@ -223,22 +574,23 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
   Tm->Branch("A2NH3", &A2NH3[1], "A2NH3/D");
   Tm->Branch("A3NH3", &A3NH3[1], "A3NH3/D");
   Tm->Branch("Nacc", &Nacc, "Nacc/D");
+  Tm->Branch("E1stat", &Estat[0], "E1stat/D");
+  Tm->Branch("E2stat", &Estat[1], "E2stat/D");
+  Tm->Branch("E3stat", &Estat[2], "E3stat/D");
   double acc_ele, acc_pion[2];
-  double sigma[2], sigmap[2], sigmaNH3[2];
+  double sigmap[2], sigmaNH3[2], sigmaAll[2];
+  double AZNH3[4] = {3.34, 0.334*7.0, -0.3, 0};
+  double AZ[4] = {0.334*10.0+0.593*2.0, 0.334*7.0+0.593*2.0, 0.22, 0};
   TString nq, nz;
   TString selectedfile;
   Long64_t Nevent;
-  double AZ[4] = {3.705, 2.703, 1.0/3.705, 0};//total
-  double AZNH3[4] = {3.333, 2.333, 0.3, 0};//NH3
   double kin[7], lab[7];
-  const double lumi = glan.lumi;//Polarized Proton
-  double Nsim, genvol, days;
-  lan->getsimulationinfo(datadirectory, &Nsim, &genvol, &days);
   std::cout << "bin analysis: pi+" << std::endl;
-  //for (int nb = 0; nb < 1; nb++){
-  for (int nb = 0; nb < Nbin; nb++){
+  //for (int nb = 112; nb < 113; nb++){
+  for (int nb = 0; nb < Nbinp; nb++){
     Fbinp->GetEntry(nb);
-    std::cout << "#" << nb << " in " << Nbin << std::endl;
+    BinNumber = nb;
+    std::cout << "#" << nb << " in " << Nbinp << std::endl;
     if (Q2l == 1.0 && Q2u == 2.0) nq = "1";
     else if (Q2l == 2.0 && Q2u == 3.0) nq = "2";
     else if (Q2l == 3.0 && Q2u == 4.0) nq = "3";
@@ -257,8 +609,8 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
     else continue;
     selectedfile = "sidis_select"+nq+nz+".root";
     TChain * Tdata = new TChain("T", "T");
-    for (int it = 0; it < Ntree; it++){
-      Tdata->Add(Form(datadirectory+"/out%.2d/Selected/"+selectedfile, it));
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
     }
     Nevent = Tdata->GetEntries();
     Tdata->SetBranchAddress("x", &kin[0]);
@@ -278,56 +630,67 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
     Tdata->SetBranchAddress("acc_ele", &acc_ele);
     Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
     Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
-    TH1D * h0p = new TH1D("h0p", "h0p", 180, 0.0, M_PI);
-    TH1D * hpp = new TH1D("hpp", "hpp", 180, 0.0, M_PI);
-    TH1D * hnp = new TH1D("hnp", "hnp", 180, 0.0, M_PI);
-    TH1D * hxp = new TH1D("hxp", "hxp", 180, 0.0, M_PI);
-    TH1D * hyp = new TH1D("hyp", "hyp", 180, 0.0, M_PI);
-    TH1D * hzp = new TH1D("hzp", "hzp", 180, 0.0, M_PI);
-    TH1D * hQ2p = new TH1D("hQ2p", "hQ2p", 180, 0.0, M_PI);
-    TH1D * hPtp = new TH1D("hPtp", "hPtp", 180, 0.0, M_PI);
+    TH2D * hs0 = new TH2D("hs0", "hs0", 60, -M_PI, M_PI, 12, 0.0, M_PI);
+    TH1D * hsim = new TH1D("hsim", "hsim", 1, -M_PI, M_PI);
+    TH1D * h0p = new TH1D("h0p", "h0p", 1, -M_PI, M_PI);
+    TH1D * hpp = new TH1D("hnp", "hnp", 1, -M_PI, M_PI);
+    TH1D * hNp = new TH1D("hNp", "hNp", 1, -M_PI, M_PI);
+    TH1D * hxp = new TH1D("hxp", "hxp", 1, -M_PI, M_PI);
+    TH1D * hyp = new TH1D("hyp", "hyp", 1, -M_PI, M_PI);
+    TH1D * hzp = new TH1D("hzp", "hzp", 1, -M_PI, M_PI);
+    TH1D * hQ2p = new TH1D("hQ2p", "hQ2p", 1, -M_PI, M_PI);
+    TH1D * hPtp = new TH1D("hPtp", "hPtp", 1, -M_PI, M_PI);
     for (int ie = 0; ie < Nevent; ie++){
       Tdata->GetEntry(ie);
       if (kin[4] < Ptl || kin[4] > Ptu) continue;
       if (kin[0] < xl || kin[0] > xu) continue;
-      lst->sigmaUUT(AZ, lab, sigma);
-      lst->sigmaUUTp(lab, sigmap);
-      lst->sigmaUUT(AZNH3, lab, sigmaNH3);
-      h0p->Fill(std::abs(kin[5]), sigma[0]*acc_ele*acc_pion[0]);
-      hpp->Fill(std::abs(kin[5]), sigmap[0]*acc_ele*acc_pion[0]);
-      hnp->Fill(std::abs(kin[5]), sigmaNH3[0]*acc_ele*acc_pion[0]);
-      hxp->Fill(std::abs(kin[5]), kin[0]*sigma[0]*acc_ele*acc_pion[0]);
-      hyp->Fill(std::abs(kin[5]), kin[1]*sigma[0]*acc_ele*acc_pion[0]);
-      hzp->Fill(std::abs(kin[5]), kin[2]*sigma[0]*acc_ele*acc_pion[0]);
-      hQ2p->Fill(std::abs(kin[5]), kin[3]*sigma[0]*acc_ele*acc_pion[0]);
-      hPtp->Fill(std::abs(kin[5]), kin[4]*sigma[0]*acc_ele*acc_pion[0]);
+      Lstructure::sigmaUUT(AZ, lab, sigmaAll);
+      Lstructure::sigmaUUT(AZNH3, lab, sigmaNH3);
+      Lstructure::sigmaUUTp(lab, sigmap);
+      hsim->Fill(kin[5],1);
+      hs0->Fill(kin[5], kin[6], sigmaAll[0]*acc_ele*acc_pion[0]);
+      h0p->Fill(kin[5], sigmaAll[0]*acc_ele*acc_pion[0]);
+      hNp->Fill(kin[5], sigmaNH3[0]*acc_ele*acc_pion[0]);
+      hpp->Fill(kin[5], sigmap[0]*acc_ele*acc_pion[0]);
+      hxp->Fill(kin[5], kin[0]*sigmaAll[0]*acc_ele*acc_pion[0]);
+      hyp->Fill(kin[5], kin[1]*sigmaAll[0]*acc_ele*acc_pion[0]);
+      hzp->Fill(kin[5], kin[2]*sigmaAll[0]*acc_ele*acc_pion[0]);
+      hQ2p->Fill(kin[5], kin[3]*sigmaAll[0]*acc_ele*acc_pion[0]);
+      hPtp->Fill(kin[5], kin[4]*sigmaAll[0]*acc_ele*acc_pion[0]);
     }
-    Nacc = h0p->Integral(1,180) * lumi * days * 24.0 * 3600.0 * genvol / Nsim / Ntree;
-    if (Nacc > 1e+3){
-      fp = hpp->Integral(1,180) / h0p->Integral(1,180);
-      fNH3 = hnp->Integral(1,180) / h0p->Integral(1,180);
-      xm = hxp->Integral(1,180) / h0p->Integral(1,180);
-      ym = hyp->Integral(1,180) / h0p->Integral(1,180);
-      zm = hzp->Integral(1,180) / h0p->Integral(1,180);
-      Q2m = hQ2p->Integral(1,180) / h0p->Integral(1,180);
-      Ptm = hPtp->Integral(1,180) / h0p->Integral(1,180);
-      if (h0p->FindFirstBinAbove(1e-9) == 1) ha = 0.0;
-      else ha = h0p->GetBinCenter(h0p->FindFirstBinAbove(1e-9));
-      if (h0p->FindLastBinAbove(1e-9) == 180) hb = M_PI;
-      else hb = h0p->GetBinCenter(h0p->FindLastBinAbove(1e-9));
+    Nsim = hsim->Integral(1, -1);
+    Nacc = h0p->Integral(1, -1) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
+    std::cout << Nsim << "  " << Nacc << std::endl;
+    if (Nacc > 1.0e+4){
+      fp = hpp->Integral(1,-1) / h0p->Integral(1,-1);
+      fNH3 = hNp->Integral(1, -1) / h0p->Integral(1, -1);
+      xm = hxp->Integral(1,-1) / h0p->Integral(1,-1);
+      ym = hyp->Integral(1,-1) / h0p->Integral(1,-1);
+      zm = hzp->Integral(1,-1) / h0p->Integral(1,-1);
+      Q2m = hQ2p->Integral(1,-1) / h0p->Integral(1,-1);
+      Ptm = hPtp->Integral(1,-1) / h0p->Integral(1,-1);
       kin[0] = xm;
       kin[1] = ym;
       kin[2] = zm;
       kin[3] = Q2m;
       kin[4] = Ptm;
-      lst->AsinHmSN(AZ, kin, A1); lst->AsinHmSp(kin, A1p); lst->AsinHmSN(AZNH3, kin, A1NH3);
-      lst->AsinHpSN(AZ, kin, A2); lst->AsinHpSp(kin, A2p); lst->AsinHpSN(AZNH3, kin, A2NH3);
-      lst->Asin3HmSN(AZ, kin, A3); lst->Asin3HmSp(kin, A3p); lst->Asin3HmSN(AZNH3, kin, A3NH3);
+      Lstructure::AsinHmSN(AZ, kin, A1); 
+      Lstructure::AsinHmSp(kin, A1p);
+      Lstructure::AsinHmSN(AZNH3, kin, A1NH3);
+      Lstructure::AsinHpSN(AZ, kin, A2); 
+      Lstructure::AsinHpSp(kin, A2p);
+      Lstructure::AsinHpSN(AZNH3, kin, A2NH3);
+      Lstructure::Asin3HmSN(AZ, kin, A3); 
+      Lstructure::Asin3HmSp(kin, A3p);
+      Lstructure::Asin3HmSN(AZNH3, kin, A3NH3);
+      EStatisticsUT3(hs0, Estat);
       Tp->Fill();
     }
+    hs0->Delete();
+    hsim->Delete();
     h0p->Delete();
     hpp->Delete();
-    hnp->Delete();
+    hNp->Delete();
     hxp->Delete();
     hyp->Delete();
     hzp->Delete();
@@ -335,12 +698,12 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
     hPtp->Delete();
     Tdata->Delete();
   }
-  Nbin = Fbinm->GetEntries();
   std::cout << "bin analysis: pi-" << std::endl;
   //for (int nb = 0; nb < 1; nb++){
-  for (int nb = 0; nb < Nbin; nb++){
+  for (int nb = 0; nb < Nbinm; nb++){
     Fbinm->GetEntry(nb);
-    std::cout << "#" << nb << " in " << Nbin << std::endl;
+    BinNumber = nb;
+    std::cout << "#" << nb << " in " << Nbinm << std::endl;
     if (Q2l == 1.0 && Q2u == 2.0) nq = "1";
     else if (Q2l == 2.0 && Q2u == 3.0) nq = "2";
     else if (Q2l == 3.0 && Q2u == 4.0) nq = "3";
@@ -359,8 +722,8 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
     else continue;
     selectedfile = "sidis_select"+nq+nz+".root";
     TChain * Tdata = new TChain("T", "T");
-    for (int it = 0; it < Ntree; it++){
-      Tdata->Add(Form(datadirectory+"/out%.2d/Selected/"+selectedfile, it));
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
     }
     Nevent = Tdata->GetEntries();
     Tdata->SetBranchAddress("x", &kin[0]);
@@ -380,56 +743,67 @@ int Lanalysis::binanalysis(const char bintreep[], const char bintreem[], const c
     Tdata->SetBranchAddress("acc_ele", &acc_ele);
     Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
     Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
-    TH1D * h0m = new TH1D("h0m", "h0m", 180, 0.0, M_PI);
-    TH1D * hpm = new TH1D("hpm", "hpm", 180, 0.0, M_PI);
-    TH1D * hnm = new TH1D("hnm", "hnm", 180, 0.0, M_PI);
-    TH1D * hxm = new TH1D("hxm", "hxm", 180, 0.0, M_PI);
-    TH1D * hym = new TH1D("hym", "hym", 180, 0.0, M_PI);
-    TH1D * hzm = new TH1D("hzm", "hzm", 180, 0.0, M_PI);
-    TH1D * hQ2m = new TH1D("hQ2m", "hQ2m", 180, 0.0, M_PI);
-    TH1D * hPtm = new TH1D("hPtm", "hPtm", 180, 0.0, M_PI);
+    TH2D * hs0 = new TH2D("hs0", "hs0", 60, -M_PI, M_PI, 12, 0.0, M_PI);
+    TH1D * hsim = new TH1D("hsim", "hsim", 1, -M_PI, M_PI);
+    TH1D * h0m = new TH1D("h0m", "h0m", 1, -M_PI, M_PI);
+    TH1D * hpm = new TH1D("hnm", "hnm", 1, -M_PI, M_PI);
+    TH1D * hNm = new TH1D("hNm", "hNm", 1, -M_PI, M_PI);
+    TH1D * hxm = new TH1D("hxm", "hxm", 1, -M_PI, M_PI);
+    TH1D * hym = new TH1D("hym", "hym", 1, -M_PI, M_PI);
+    TH1D * hzm = new TH1D("hzm", "hzm", 1, -M_PI, M_PI);
+    TH1D * hQ2m = new TH1D("hQ2m", "hQ2m", 1, -M_PI, M_PI);
+    TH1D * hPtm = new TH1D("hPtm", "hPtm", 1, -M_PI, M_PI);
     for (int ie = 0; ie < Nevent; ie++){
       Tdata->GetEntry(ie);
       if (kin[4] < Ptl || kin[4] > Ptu) continue;
       if (kin[0] < xl || kin[0] > xu) continue;
-      lst->sigmaUUT(AZ, lab, sigma);
-      lst->sigmaUUTp(lab, sigmap);
-      lst->sigmaUUT(AZNH3, lab, sigmaNH3);
-      h0m->Fill(std::abs(kin[5]), sigma[1]*acc_ele*acc_pion[1]);
-      hpm->Fill(std::abs(kin[5]), sigmap[1]*acc_ele*acc_pion[1]);
-      hnm->Fill(std::abs(kin[5]), sigmaNH3[1]*acc_ele*acc_pion[1]);
-      hxm->Fill(std::abs(kin[5]), kin[0]*sigma[1]*acc_ele*acc_pion[1]);
-      hym->Fill(std::abs(kin[5]), kin[1]*sigma[1]*acc_ele*acc_pion[1]);
-      hzm->Fill(std::abs(kin[5]), kin[2]*sigma[1]*acc_ele*acc_pion[1]);
-      hQ2m->Fill(std::abs(kin[5]), kin[3]*sigma[1]*acc_ele*acc_pion[1]);
-      hPtm->Fill(std::abs(kin[5]), kin[4]*sigma[1]*acc_ele*acc_pion[1]);
+      Lstructure::sigmaUUT(AZ, lab, sigmaAll);
+      Lstructure::sigmaUUT(AZNH3, lab, sigmaNH3);
+      Lstructure::sigmaUUTp(lab, sigmap);
+      hsim->Fill(kin[5], 1);
+      hs0->Fill(kin[5], kin[6], sigmaAll[1]*acc_ele*acc_pion[1]);
+      h0m->Fill(kin[5], sigmaAll[1]*acc_ele*acc_pion[1]);
+      hpm->Fill(kin[5], sigmap[1]*acc_ele*acc_pion[1]);
+      hNm->Fill(kin[5], sigmaNH3[1]*acc_ele*acc_pion[1]);
+      hxm->Fill(kin[5], kin[0]*sigmaAll[1]*acc_ele*acc_pion[1]);
+      hym->Fill(kin[5], kin[1]*sigmaAll[1]*acc_ele*acc_pion[1]);
+      hzm->Fill(kin[5], kin[2]*sigmaAll[1]*acc_ele*acc_pion[1]);
+      hQ2m->Fill(kin[5], kin[3]*sigmaAll[1]*acc_ele*acc_pion[1]);
+      hPtm->Fill(kin[5], kin[4]*sigmaAll[1]*acc_ele*acc_pion[1]);
     }
-    Nacc = h0m->Integral(1,180) * lumi * days * 24.0 * 3600.0 * genvol / Nsim / Ntree;
-    if (Nacc > 1e+3){
-      fp = hpm->Integral(1,180) / h0m->Integral(1,180);
-      fNH3 = hnm->Integral(1,180) / h0m->Integral(1,180);
-      xm = hxm->Integral(1,180) / h0m->Integral(1,180);
-      ym = hym->Integral(1,180) / h0m->Integral(1,180);
-      zm = hzm->Integral(1,180) / h0m->Integral(1,180);
-      Q2m = hQ2m->Integral(1,180) / h0m->Integral(1,180);
-      Ptm = hPtm->Integral(1,180) / h0m->Integral(1,180);
-      if (h0m->FindFirstBinAbove(1e-9) == 1) ha = 0.0;
-      else ha = h0m->GetBinCenter(h0m->FindFirstBinAbove(1e-9));
-      if (h0m->FindLastBinAbove(1e-9) == 180) hb = M_PI;
-      else hb = h0m->GetBinCenter(h0m->FindLastBinAbove(1e-9));
+    Nsim = hsim->Integral(1, -1);
+    Nacc = h0m->Integral(1, -1) *_eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
+    std::cout << Nsim << "  " << Nacc << std::endl;
+    if (Nacc > 1.0e+4){
+      fp = hpm->Integral(1, -1) / h0m->Integral(1, -1);
+      fNH3 = hNm->Integral(1, -1) / h0m->Integral(1, -1);
+      xm = hxm->Integral(1, -1) / h0m->Integral(1, -1);
+      ym = hym->Integral(1, -1) / h0m->Integral(1, -1);
+      zm = hzm->Integral(1, -1) / h0m->Integral(1, -1);
+      Q2m = hQ2m->Integral(1, -1) / h0m->Integral(1, -1);
+      Ptm = hPtm->Integral(1, -1) / h0m->Integral(1, -1);
       kin[0] = xm;
       kin[1] = ym;
       kin[2] = zm;
       kin[3] = Q2m;
       kin[4] = Ptm;
-      lst->AsinHmSN(AZ, kin, A1); lst->AsinHmSp(kin, A1p); lst->AsinHmSN(AZNH3, kin, A1NH3);
-      lst->AsinHpSN(AZ, kin, A2); lst->AsinHpSp(kin, A2p); lst->AsinHpSN(AZNH3, kin, A2NH3);
-      lst->Asin3HmSN(AZ, kin, A3); lst->Asin3HmSp(kin, A3p); lst->Asin3HmSN(AZNH3, kin, A3NH3);
+      Lstructure::AsinHmSN(AZ, kin, A1); 
+      Lstructure::AsinHmSp(kin, A1p); 
+      Lstructure::AsinHmSN(AZNH3, kin, A1NH3);
+      Lstructure::AsinHpSN(AZ, kin, A2); 
+      Lstructure::AsinHpSp(kin, A2p); 
+      Lstructure::AsinHpSN(AZNH3, kin, A2NH3);
+      Lstructure::Asin3HmSN(AZ, kin, A3); 
+      Lstructure::Asin3HmSp(kin, A3p); 
+      Lstructure::Asin3HmSN(AZNH3, kin, A3NH3);
+      EStatisticsUT3(hs0, Estat);
       Tm->Fill();
     }
+    hs0->Delete();
+    hsim->Delete();
     h0m->Delete();
     hpm->Delete();
-    hnm->Delete();
+    hNm->Delete();
     hxm->Delete();
     hym->Delete();
     hzm->Delete();
@@ -488,7 +862,7 @@ double Lanalysis::Threeterm2(const double * coef, const double * phi){
 int Lanalysis::ThreetermStatistics(const double * hr, TH1D * h0, double * Estat){
   //const double eps = 1e-5;
   double M3inv[9];
-  lan->ThreetermMatrix(hr, M3inv);
+  ThreetermMatrix(hr, M3inv);
   int Nb = h0->GetNbinsX();
   double average = h0->Integral(1, Nb) / Nb;
   double Nacc = average * Nb;
@@ -498,21 +872,21 @@ int Lanalysis::ThreetermStatistics(const double * hr, TH1D * h0, double * Estat)
   for (int i = 1; i <= Nb; i++){
     phih = h0->GetBinCenter(i);
     gh = h0->GetBinContent(i) / average;
-    Es[0] = Es[0] + lan->Threeterm1(&M3inv[0], &phih) * gh * 2.0 * M_PI * M_PI / Nacc;
-    Es[1] = Es[1] + lan->Threeterm1(&M3inv[3], &phih) * gh * 2.0 * M_PI * M_PI / Nacc;
-    Es[2] = Es[2] + lan->Threeterm1(&M3inv[6], &phih) * gh * 2.0 * M_PI * M_PI / Nacc;
+    Es[0] = Es[0] + Threeterm1(&M3inv[0], &phih) * gh * 2.0 * M_PI * M_PI / Nacc;
+    Es[1] = Es[1] + Threeterm1(&M3inv[3], &phih) * gh * 2.0 * M_PI * M_PI / Nacc;
+    Es[2] = Es[2] + Threeterm1(&M3inv[6], &phih) * gh * 2.0 * M_PI * M_PI / Nacc;
   }
   double width = h0->GetBinWidth(1);
-  Estat[0] = sqrt(2.0 * Es[0] * width) / glan.ST;
-  Estat[1] = sqrt(2.0 * Es[1] * width) / glan.ST;
-  Estat[2] = sqrt(2.0 * Es[2] * width) / glan.ST;
+  Estat[0] = sqrt(2.0 * Es[0] * width) / _ST;
+  Estat[1] = sqrt(2.0 * Es[1] * width) / _ST;
+  Estat[2] = sqrt(2.0 * Es[2] * width) / _ST;
   return 0;
 }
 
 int Lanalysis::EStatisticsUT3(TH1D * h0, double * Estat){
   int Nb = h0->GetNbinsX();
   double average = h0->Integral(1, Nb) / Nb;
-  double Nacc = average * Nb;
+  double Nacc = h0->Integral(1, Nb) *_eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
   double gh;
   double c0 = 0;
   double c2 = 0;
@@ -534,9 +908,9 @@ int Lanalysis::EStatisticsUT3(TH1D * h0, double * Estat){
   M3(1, 0) = -c2; M3(1, 1) = c0; M3(1, 2) = -c4;
   M3(2, 0) = c2; M3(2, 1) = -c4; M3(2, 2) = c0;
   M3.Invert();
-  Estat[0] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(0,0),2) + pow(M3(0,1),2) + pow(M3(0,2),2)) * M_PI * M_PI) / glan.ST;
-  Estat[1] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(1,0),2) + pow(M3(1,1),2) + pow(M3(1,2),2)) * M_PI * M_PI) / glan.ST;
-  Estat[2] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(2,0),2) + pow(M3(2,1),2) + pow(M3(2,2),2)) * M_PI * M_PI) / glan.ST;
+  Estat[0] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(0,0),2) + pow(M3(0,1),2) + pow(M3(0,2),2)) * M_PI * M_PI);
+  Estat[1] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(1,0),2) + pow(M3(1,1),2) + pow(M3(1,2),2)) * M_PI * M_PI);
+  Estat[2] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(2,0),2) + pow(M3(2,1),2) + pow(M3(2,2),2)) * M_PI * M_PI);
   return 0;
 };
 
@@ -544,7 +918,7 @@ int Lanalysis::EStatisticsUT3(TH2D * hs0, double * Estat){
   int NX = hs0->GetNbinsX();
   int NY = hs0->GetNbinsY();
   double average = hs0->Integral(1, NX, 1, NY) / NX / NY;
-  double Nacc = average * NX * NY;
+  double Nacc = hs0->Integral(1, NX, 1, NY) * _eff * _lumi * _days *24.0 * 3600.0 / _simdensity;
   double ghs;
   double cc[6] = {0, 0, 0, 0, 0, 0};
   double phih, phiS;
@@ -570,9 +944,9 @@ int Lanalysis::EStatisticsUT3(TH2D * hs0, double * Estat){
   M3(1, 0) = cc[1]; M3(1, 1) = cc[3]; M3(1, 2) = cc[4];
   M3(2, 0) = cc[2]; M3(2, 1) = cc[4]; M3(2, 2) = cc[5];
   M3.Invert();
-  Estat[0] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(0,0),2) + pow(M3(0,1),2) + pow(M3(0,2),2)) * M_PI * M_PI) / glan.ST;
-  Estat[1] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(1,0),2) + pow(M3(1,1),2) + pow(M3(1,2),2)) * M_PI * M_PI) / glan.ST;
-  Estat[2] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(2,0),2) + pow(M3(2,1),2) + pow(M3(2,2),2)) * M_PI * M_PI) / glan.ST;
+  Estat[0] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(0,0),2) + pow(M3(0,1),2) + pow(M3(0,2),2)) * M_PI * M_PI);
+  Estat[1] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(1,0),2) + pow(M3(1,1),2) + pow(M3(1,2),2)) * M_PI * M_PI);
+  Estat[2] = sqrt(2.0*M_PI*M_PI/Nacc * (pow(M3(2,0),2) + pow(M3(2,1),2) + pow(M3(2,2),2)) * M_PI * M_PI);
   return 0;
 }
 
@@ -618,14 +992,14 @@ int Lanalysis::CalRMS(double * lab, double * rms, int calls = 100){
   dw[5] = _theta_pi->GetBinContent(bin_p_pi, bin_theta_pi) / 1000.0 * radtodeg;
   dw[6] = _phi_pi->GetBinContent(bin_p_pi, bin_theta_pi) / 1000.0 * radtodeg;
   double phys[9];//x, y, z, Q2, Pt, phih, phiS, W, Wp
-  lst->CalcVariables(lab, phys);
+  Lstructure::CalcVariables(lab, phys);
   double newlab[7], newphys[9], d2[7];
   double accum[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   for (int n = 0; n < calls; n++){
     for (int i = 0; i < 7; i++){
       newlab[i] = lab[i] + gRandom->Gaus(0.0, dw[i]);
     }
-    lst->CalcVariables(newlab, newphys);
+    Lstructure::CalcVariables(newlab, newphys);
     if (newphys[5] - phys[5] > M_PI) newphys[5] = newphys[5] - 2.0*M_PI;
     if (newphys[5] - phys[5] < -M_PI) newphys[5] = newphys[5] + 2.0*M_PI;
     if (newphys[6] - phys[6] > M_PI) newphys[6] = newphys[6] - 2.0*M_PI;
@@ -670,7 +1044,7 @@ double Lanalysis::ThreetermDAUT2S(const double * Asym, const double * phi){
 int Lanalysis::EResolutionH(const double * hr, const double * Asym, TH2D * dH, double * EresH){
   const double eps = 1.0e-5;
   double M3inv[9];
-  lan->ThreetermMatrix(hr, M3inv);
+  ThreetermMatrix(hr, M3inv);
   double phi[2];
   int bina1 = dH->GetXaxis()->FindBin(-hr[1]+eps);
   int binb1 = dH->GetXaxis()->FindBin(-hr[0]-eps);
@@ -688,10 +1062,10 @@ int Lanalysis::EResolutionH(const double * hr, const double * Asym, TH2D * dH, d
       delta = dH->GetBinContent(i,j);
       phi[0] = dH->GetXaxis()->GetBinCenter(i);
       phi[1] = dH->GetYaxis()->GetBinCenter(j);
-      dAUT2 = lan->ThreetermDAUT2H(Asym, phi);
-      separate2[0] = lan->Threeterm2(&M3inv[0], phi);
-      separate2[1] = lan->Threeterm2(&M3inv[3], phi);
-      separate2[2] = lan->Threeterm2(&M3inv[6], phi);
+      dAUT2 = ThreetermDAUT2H(Asym, phi);
+      separate2[0] = Threeterm2(&M3inv[0], phi);
+      separate2[1] = Threeterm2(&M3inv[3], phi);
+      separate2[2] = Threeterm2(&M3inv[6], phi);
       Es[0] = Es[0] + delta*delta*dAUT2*separate2[0];
       Es[1] = Es[1] + delta*delta*dAUT2*separate2[1];
       Es[2] = Es[2] + delta*delta*dAUT2*separate2[2];
@@ -702,10 +1076,10 @@ int Lanalysis::EResolutionH(const double * hr, const double * Asym, TH2D * dH, d
       delta = dH->GetBinContent(i,j);
       phi[0] = dH->GetXaxis()->GetBinCenter(i);
       phi[1] = dH->GetYaxis()->GetBinCenter(j);
-      dAUT2 = lan->ThreetermDAUT2H(Asym, phi);
-      separate2[0] = lan->Threeterm2(&M3inv[0], phi);
-      separate2[1] = lan->Threeterm2(&M3inv[3], phi);
-      separate2[2] = lan->Threeterm2(&M3inv[6], phi);
+      dAUT2 = ThreetermDAUT2H(Asym, phi);
+      separate2[0] = Threeterm2(&M3inv[0], phi);
+      separate2[1] = Threeterm2(&M3inv[3], phi);
+      separate2[2] = Threeterm2(&M3inv[6], phi);
       Es[0] = Es[0] + delta*delta*dAUT2*separate2[0];
       Es[1] = Es[1] + delta*delta*dAUT2*separate2[1];
       Es[2] = Es[2] + delta*delta*dAUT2*separate2[2];
@@ -720,7 +1094,7 @@ int Lanalysis::EResolutionH(const double * hr, const double * Asym, TH2D * dH, d
 int Lanalysis::EResolutionS(const double * hr, const double * Asym, TH2D * dS, double * EresS){
   const double eps = 1.0e-5;
   double M3inv[9];
-  lan->ThreetermMatrix(hr, M3inv);
+  ThreetermMatrix(hr, M3inv);
   double phi[2];
   int bina1 = dS->GetXaxis()->FindBin(-hr[1]+eps);
   int binb1 = dS->GetXaxis()->FindBin(-hr[0]-eps);
@@ -738,10 +1112,10 @@ int Lanalysis::EResolutionS(const double * hr, const double * Asym, TH2D * dS, d
       delta = dS->GetBinContent(i,j);
       phi[0] = dS->GetXaxis()->GetBinCenter(i);
       phi[1] = dS->GetYaxis()->GetBinCenter(j);
-      dAUT2 = lan->ThreetermDAUT2S(Asym, phi);
-      separate2[0] = lan->Threeterm2(&M3inv[0], phi);
-      separate2[1] = lan->Threeterm2(&M3inv[3], phi);
-      separate2[2] = lan->Threeterm2(&M3inv[6], phi);
+      dAUT2 = ThreetermDAUT2S(Asym, phi);
+      separate2[0] = Threeterm2(&M3inv[0], phi);
+      separate2[1] = Threeterm2(&M3inv[3], phi);
+      separate2[2] = Threeterm2(&M3inv[6], phi);
       Es[0] = Es[0] + delta*delta*dAUT2*separate2[0];
       Es[1] = Es[1] + delta*delta*dAUT2*separate2[1];
       Es[2] = Es[2] + delta*delta*dAUT2*separate2[2];
@@ -752,10 +1126,10 @@ int Lanalysis::EResolutionS(const double * hr, const double * Asym, TH2D * dS, d
       delta = dS->GetBinContent(i,j);
       phi[0] = dS->GetXaxis()->GetBinCenter(i);
       phi[1] = dS->GetYaxis()->GetBinCenter(j);
-      dAUT2 = lan->ThreetermDAUT2S(Asym, phi);
-      separate2[0] = lan->Threeterm2(&M3inv[0], phi);
-      separate2[1] = lan->Threeterm2(&M3inv[3], phi);
-      separate2[2] = lan->Threeterm2(&M3inv[6], phi);
+      dAUT2 = ThreetermDAUT2S(Asym, phi);
+      separate2[0] = Threeterm2(&M3inv[0], phi);
+      separate2[1] = Threeterm2(&M3inv[3], phi);
+      separate2[2] = Threeterm2(&M3inv[6], phi);
       Es[0] = Es[0] + delta*delta*dAUT2*separate2[0];
       Es[1] = Es[1] + delta*delta*dAUT2*separate2[1];
       Es[2] = Es[2] + delta*delta*dAUT2*separate2[2];
@@ -773,9 +1147,10 @@ double Lanalysis::RandomCoincidentSigma(const double * lab, int hadron){
   if (lab[0] == 11.0) radlen = 0.04896;
   if (lab[0] == 8.8) radlen = 0.04793;
   double sigma_pi = wiser_sigma(lab[0], lab[4], lab[5] * degtorad, radlen, hadron) / 3.89379e+5;
-  double sigma_e = calcombine(lab[0], lab[1], lab[2] * degtorad, 3.705, 2.705);
+  double sigma_e;
+  Lstructure::sigmaDISp(lab, &sigma_e);
   //double vertexfactor = lan->GetVertexFactor(lab);
-  return sigma_e * sigma_pi * glan.lumi * glan.timewindow / 1.0;
+  return sigma_e * sigma_pi * _lumi * 6e-9 / 1.0;
 }
 
 int Lanalysis::ECoincidence(const double * Asym, TH1D * hsb, double * Ecoin){

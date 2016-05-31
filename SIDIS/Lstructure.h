@@ -9,24 +9,8 @@
 
 class Lstructure{
  protected:
-  double std_f1para;
-  double std_g1para;
-  double std_h1para[7];
-  double std_f1tpara[11];
-  double std_h1tpara[7];
-  double std_D1para;
-  double std_H1para[7];
-  double poly_H1para[7];
  public:
   Lstructure(double ts);
-  void Getstd_f1para(double * para);
-  void Getstd_g1para(double * para);
-  void Getstd_h1para(double * para);
-  void Getstd_f1tpara(double * para);
-  void Getstd_h1tpara(double * para);
-  void Getstd_D1para(double * para);
-  void Getstd_H1para(double * para);
-  void Getpoly_H1para(double * para);
   /* unpolarized PDF */
   static int f1_ct14(const double * var, double * f1);
   static int f1_mmht(const double * var, double * f1);
@@ -74,6 +58,10 @@ class Lstructure{
   static int DISF2p(const double * var, double * FF);
   static int DISF2n(const double * var, double * FF);
   static int DISF2N(const double * AZ, const double * var, double * FF);
+  /* Inclusive cross section */
+  static int sigmaDISp(const double * lab, double * xs);
+  static int sigmaDISn(const double * lab, double * xs);
+  static int sigmaDISN(const double * AZ, const double * lab, double * xs);
   /* Semi-inclusive structure functions */
   static int FUUTp(const double * var, double * FF, const double * fpara, const double * Dpara);
   static int FUUTn(const double * var, double * FF, const double * fpara, const double * Dpara);
@@ -109,50 +97,8 @@ class Lstructure{
 };
 
 Lstructure::Lstructure(double ts){
-  std_f1para = 0.25;//kt2
-  std_g1para = 0.25;//kt2
-  std_f1tpara[0] = 0.35;//Nu
-  std_f1tpara[1] = -0.90;//Nd
-  std_f1tpara[2] = -0.24;//Ns
-  std_f1tpara[3] = 0.04;//Nubar
-  std_f1tpara[4] = -0.40;//Ndbar
-  std_f1tpara[5] = 1.0;//Nsbar
-  std_f1tpara[6] = 0.73;//au
-  std_f1tpara[7] = 1.08;//ad
-  std_f1tpara[8] = 0.79;//asea
-  std_f1tpara[9] = 3.46;//b
-  std_f1tpara[10] = 0.34;//Ms2
-  std_h1para[0] = 0.46;//Nu
-  std_h1para[1] = -1.0;//Nd
-  std_h1para[2] = 1.11;//au
-  std_h1para[3] = 1.11;//ad
-  std_h1para[4] = 3.64;//bu
-  std_h1para[5] = 3.64;//bd
-  std_h1para[6] = 0.25;//kt2
-  std_h1tpara[0] = 1.0;//Nu
-  std_h1tpara[1] = -1.0;//Nd
-  std_h1tpara[2] = 2.5;//au
-  std_h1tpara[3] = 2.5;//ad
-  std_h1tpara[4] = 2.0;//bu
-  std_h1tpara[5] = 2.0;//bd
-  std_h1tpara[6] = 0.18;//Mt2
-  std_D1para = 0.20;//pt2
-  std_H1para[0] = 0.49;//Nu
-  std_H1para[1] = -1.0;//Nd
-  std_H1para[2] = 1.06;//cu
-  std_H1para[3] = 1.06;//cd
-  std_H1para[4] = 0.07;//du
-  std_H1para[5] = 0.07;//dd
-  std_H1para[6] = 1.5;//Mh2
-  poly_H1para[0] = 1.0;
-  poly_H1para[1] = -1.0;
-  poly_H1para[2] = -2.36;
-  poly_H1para[3] = -2.36;
-  poly_H1para[4] = 2.12;
-  poly_H1para[5] = 2.12;
-  poly_H1para[6] = 0.67;
+  std::cout << "A Lstructure object constructed." << std::endl;
 }
-
 
 const LHAPDF::PDF * _pdfs = LHAPDF::mkPDF("CT14lo", 0);
 int Lstructure::f1_ct14(const double * var, double * f1){
@@ -813,6 +759,55 @@ int Lstructure::DISF2N(const double * AZ, const double * var, double * FF){
   FF[0] = pow(2.0/3.0, 2) * var[0] * (f1[0] + f1[3]) + pow(1.0/3.0, 2) * var[0] * (f1[1] + f1[2] + f1[4] + f1[5]);
   return 0;
 } 
+
+int Lstructure::sigmaDISp(const double * lab, double * xs){
+  //lab: E, p, theta
+  //xs: d sigma/ dp dOmega in unit GeV^-2 / GeV.str
+  const double alpha_em = 1.0 / 137.0;
+  const double M = 0.93827;
+  double y = (lab[0] - lab[1]) / lab[0];
+  double Q2 = 2.0 * lab[0] * lab[1] * (1.0 - cos(lab[2] * M_PI / 180.0));
+  double x = Q2 / (2.0 * M * (lab[0] - lab[1]));
+  if ( x > 1.0 || y > 1.0) xs[0] = 0.0;
+  else {
+    double var[2] = {x, Q2};
+    double F1, F2;
+    DISF2p(var, &F2);
+    F1 = F2 / (2.0 * x);
+    xs[0] = (2.0 * (1.0 - y) * pow(alpha_em, 2)) / ( x * y * y * Q2 * M) * ((1.0 - y - pow(x * y * M, 2) / Q2) * F2 + x * y * y * F1);
+  }
+  return 0;
+}
+  
+int Lstructure::sigmaDISn(const double * lab, double * xs){
+  //lab: E, p, theta
+  //xs: d sigma/ dp dOmega in unit GeV^-2 / GeV.str
+  const double alpha_em = 1.0 / 137.0;
+  const double M = 0.93957;
+  double y = (lab[0] - lab[1]) / lab[0];
+  double Q2 = 2.0 * lab[0] * lab[1] * (1.0 - cos(lab[2] * M_PI / 180.0));
+  double x = Q2 / (2.0 * M * (lab[0] - lab[1]));
+  if ( x > 1.0 || y > 1.0) xs[0] = 0.0;
+  else {
+    double var[2] = {x, Q2};
+    double F1, F2;
+    DISF2n(var, &F2);
+    F1 = F2 / (2.0 * x);
+    xs[0] = (2.0 * (1.0 - y) * pow(alpha_em, 2)) / ( x * y * y * Q2 * M) * ((1.0 - y - pow(x * y * M, 2) / Q2) * F2 + x * y * y * F1);
+  }
+  return 0;
+}
+
+int Lstructure::sigmaDISN(const double * AZ, const double * lab, double * xs){
+  //lab: E, p, theta
+  //xs: d sigma/ dp dOmega in unit GeV^-2 / GeV.str
+  double xp, xn;
+  sigmaDISp(lab, &xp);
+  sigmaDISn(lab, &xn);
+  xs[0] = AZ[0] * xp + AZ[1] * xn;
+  return 0;
+}
+
 
 int Lstructure::FUUTp(const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0){
   //var: x, Q2, z, Pt
