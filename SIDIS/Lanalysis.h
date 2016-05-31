@@ -67,7 +67,7 @@ Lanalysis::Lanalysis(double st){
   Pp = 1;
 }
 
-int Lanalysis::makebininfotree(const char bininfo[], const char bintree[], const double E0 = 11.0){
+int Lanalysis::MakeBinInfoTree(const char bininfo[], const char bintree[], const double E0 = 11.0){
   TString infofile = bininfo;
   ifstream infile(infofile);
   if (!infile.is_open()){
@@ -106,7 +106,7 @@ int Lanalysis::getsimulationinfo(const char datadir[], double * Nsim, double * g
   TString datadirectory = datadir;
   TString filename = datadirectory+"/out00/run.dat";
   double run[11];
-  lge->setrange(run, filename);
+  //lge->setrange(run, filename);
   Nsim[0] = run[0];
   genvol[0] = run[10];
   double E0 = run[9];
