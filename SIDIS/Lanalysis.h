@@ -35,12 +35,27 @@ class Lanalysis{
   double _days;
   double _simdensity;
   int _Ntree;
+ private:
+  int _res_ctrl;
+  TFile * _file_e;
+  TH2D * _theta_e;
+  TH2D * _phi_e;
+  TH2D * _p_e;
+  TH2D * _z_e;
+  TFile * _file_pi;
+  TH2D * _theta_pi;
+  TH2D * _phi_pi;
+  TH2D * _p_pi;
+  TH2D * _z_pi;
  public:
+  Lanalysis(TString datadir);
   Lanalysis(TString datadir, TString binfile1, TString binfile2);
   static int MakeBinInfoTree(const char bininfo[], const char bintree[], const double E0);
   int SetSimInfo(double lumi, double days, double ST, int Ntree);
   int BinAnalysisNeutron(const char savefile[]);
   int BinAnalysisProton(const char savefile[]);
+  int BinResolutionNeutron(const char bintree[], const char savefile[]);
+  int BinResolutionProton(const char bintree[], const char savefile[]);
   int ThreetermMatrix(const double * hr, double * M3inv);
   double Threeterm1(const double * coef, const double * phih);
   double Threeterm2(const double * coef, const double * phi);
@@ -51,6 +66,7 @@ class Lanalysis{
   int EStatisticsUT3(TH2D * hs0, double * Estat);
   int ETargetPolarization(const double * Asym, double * Etarpol);
   int EPolarizationDirection(const double * Asym, double * EtarPD);
+  int GetResolutionFiles();
   int EResolutionH(const double * hr, const double * Asym, TH2D * dH, double * EresH);
   int EResolutionS(const double * hr, const double * Asym, TH2D * dS, double * EresS);
   int ECoincidence(const double * Asym, TH1D * hsb, double * Ecoin); 
@@ -58,6 +74,11 @@ class Lanalysis{
   double GetVertexFactor(const double * lab, const double length);
   double RandomCoincidentSigma(const double * lab, int hadron);
 };
+
+Lanalysis::Lanalysis(TString datadir){
+  _datadir = datadir;
+  _res_ctrl = 0;
+}
 
 Lanalysis::Lanalysis(TString datadir, TString binfile1, TString binfile2){
   _datadir = datadir;
@@ -815,6 +836,258 @@ int Lanalysis::BinAnalysisProton(const char savefile[]){
   return 0;
 }
 
+int Lanalysis::BinResolutionNeutron(const char bintree[], const char savefile[]){
+  TFile * fb = new TFile(bintree,"r");
+  TTree * Tp = (TTree *) fb->Get("binplus");
+  TTree * Tm = (TTree *) fb->Get("binminus");
+  double BinNumber;
+  double Q2m, zm;
+  double xl, xu, Ptl, Ptu;
+  double Nbinp = Tp->GetEntries();
+  double Nbinm = Tm->GetEntries();
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("zm", &zm);
+  Tp->SetBranchAddress("Q2m", &Q2m);
+  Tp->SetBranchAddress("xl", &xl);
+  Tp->SetBranchAddress("xu", &xu);
+  Tp->SetBranchAddress("Ptl", &Ptl);
+  Tp->SetBranchAddress("Ptu", &Ptu);
+  Tm->SetBranchAddress("BinNumber", &BinNumber);
+  Tm->SetBranchAddress("zm", &zm);
+  Tm->SetBranchAddress("Q2m", &Q2m);
+  Tm->SetBranchAddress("xl", &xl);
+  Tm->SetBranchAddress("xu", &xu);
+  Tm->SetBranchAddress("Ptl", &Ptl);
+  Tm->SetBranchAddress("Ptu", &Ptu);
+  double rms[7];
+  double dz_e, dz_pi;
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Rp = new TTree("rmsplus", "rmsplus");
+  Rp->SetDirectory(fs);
+  TTree * Rm = new TTree("rmsminus", "rmsminus");
+  Rm->SetDirectory(fs);
+  Rp->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Rp->Branch("dx", &rms[0], "dx/D");
+  Rp->Branch("dy", &rms[1], "dy/D");
+  Rp->Branch("dz", &rms[2], "dz/D");
+  Rp->Branch("dQ2", &rms[3], "dQ2/D");
+  Rp->Branch("dPt", &rms[4], "dPt/D");
+  Rp->Branch("dphih", &rms[5], "dphih/D");
+  Rp->Branch("dphiS", &rms[6], "dphiS/D");
+  Rp->Branch("dz_e", &dz_e, "dz_e/D");
+  Rp->Branch("dz_pi", &dz_pi, "dz_pi/D");
+  Rm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Rm->Branch("dx", &rms[0], "dx/D");
+  Rm->Branch("dy", &rms[1], "dy/D");
+  Rm->Branch("dz", &rms[2], "dz/D");
+  Rm->Branch("dQ2", &rms[3], "dQ2/D");
+  Rm->Branch("dPt", &rms[4], "dPt/D");
+  Rm->Branch("dphih", &rms[5], "dphih/D");
+  Rm->Branch("dphiS", &rms[6], "dphiS/D");
+  Rm->Branch("dz_e", &dz_e, "dz_e/D");
+  Rm->Branch("dz_pi", &dz_pi, "dz_pi/D");
+  double acc_ele, acc_pion[2];
+  double sigma[2];
+  double AZ[4] = {2, 1, -0.028, 0.86};//total
+  TString nq, nz;
+  TString selectedfile;
+  Long64_t Nevent;
+  double kin[7], lab[7];
+  std::cout << "bin resolution: pi+" << std::endl;
+  //for (int nb = 612; nb < 613; nb++){
+  for (int nb = 0; nb < Nbinp; nb++){
+    Tp->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinp << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &kin[0]);
+    Tdata->SetBranchAddress("y", &kin[1]);
+    Tdata->SetBranchAddress("z", &kin[2]);
+    Tdata->SetBranchAddress("Q2", &kin[3]);
+    Tdata->SetBranchAddress("Pt", &kin[4]);
+    Tdata->SetBranchAddress("phi_h", &kin[5]);
+    Tdata->SetBranchAddress("phi_S", &kin[6]);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 1, 0.0, 2.0);
+    TH1D * hx = new TH1D("hx", "hx", 1, 0.0, 2.0);
+    TH1D * hy = new TH1D("hy", "hy", 1, 0.0, 2.0);
+    TH1D * hz = new TH1D("hz", "hz", 1, 0.0, 2.0);
+    TH1D * hQ2 = new TH1D("hQ2", "hQ2", 1, 0.0, 2.0);
+    TH1D * hPt = new TH1D("hPt", "hPt", 1, 0.0, 2.0);
+    TH1D * hphih = new TH1D("hphih", "hphih", 1, 0.0, 2.0);
+    TH1D * hphiS = new TH1D("hphiS", "hphiS", 1, 0.0, 2.0);
+    TH1D * hze = new TH1D("hze", "hze", 1.0, 0.0, 2.0);
+    TH1D * hzpi = new TH1D("hzpi", "hzpi", 1.0, 0.0, 2.0);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (kin[4] < Ptl || kin[4] > Ptu) continue;
+      if (kin[0] < xl || kin[0] > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigma);
+      CalRMS(lab, rms, 100);
+      dz_e = _z_e->GetBinContent(_z_e->GetXaxis()->FindBin(lab[1]),_z_e->GetYaxis()->FindBin(lab[2]));
+      dz_pi = _z_pi->GetBinContent(_z_pi->GetXaxis()->FindBin(lab[4]),_z_pi->GetYaxis()->FindBin(lab[5]));
+      h0->Fill(1.0, sigma[0]*acc_ele*acc_pion[0]);
+      hx->Fill(1.0, rms[0]*sigma[0]*acc_ele*acc_pion[0]);
+      hy->Fill(1.0, rms[1]*sigma[0]*acc_ele*acc_pion[0]);
+      hz->Fill(1.0, rms[2]*sigma[0]*acc_ele*acc_pion[0]);
+      hQ2->Fill(1.0, rms[3]*sigma[0]*acc_ele*acc_pion[0]);
+      hPt->Fill(1.0, rms[4]*sigma[0]*acc_ele*acc_pion[0]);
+      hphih->Fill(1.0, rms[5]*sigma[0]*acc_ele*acc_pion[0]);
+      hphiS->Fill(1.0, rms[6]*sigma[0]*acc_ele*acc_pion[0]);
+      hze->Fill(1.0, dz_e*sigma[0]*acc_ele*acc_pion[0]);
+      hzpi->Fill(1.0, dz_pi*sigma[0]*acc_ele*acc_pion[0]);
+    }
+    rms[0] = hx->Integral(1, -1) / h0->Integral(1, -1);
+    rms[1] = hy->Integral(1, -1) / h0->Integral(1, -1);
+    rms[2] = hz->Integral(1, -1) / h0->Integral(1, -1);
+    rms[3] = hQ2->Integral(1, -1) / h0->Integral(1, -1);
+    rms[4] = hPt->Integral(1, -1) / h0->Integral(1, -1);
+    rms[5] = hphih->Integral(1, -1) / h0->Integral(1, -1);
+    rms[6] = hphiS->Integral(1, -1) / h0->Integral(1, -1);
+    dz_e = hze->Integral(1, -1) / h0->Integral(1, -1);
+    dz_pi = hzpi->Integral(1, -1) / h0->Integral(1, -1);
+    Rp->Fill();
+    h0->Delete();
+    hx->Delete();
+    hy->Delete();
+    hz->Delete();
+    hQ2->Delete();
+    hPt->Delete();
+    hphih->Delete();
+    hphiS->Delete();
+    hze->Delete();
+    hzpi->Delete();
+    Tdata->Delete();
+  }
+  std::cout << "bin analysis: pi-" << std::endl;
+  //for (int nb = 0; nb < 1; nb++){
+  for (int nb = 0; nb < Nbinm; nb++){
+    Tm->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinm << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &kin[0]);
+    Tdata->SetBranchAddress("y", &kin[1]);
+    Tdata->SetBranchAddress("z", &kin[2]);
+    Tdata->SetBranchAddress("Q2", &kin[3]);
+    Tdata->SetBranchAddress("Pt", &kin[4]);
+    Tdata->SetBranchAddress("phi_h", &kin[5]);
+    Tdata->SetBranchAddress("phi_S", &kin[6]);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 1, 0.0, 2.0);
+    TH1D * hx = new TH1D("hx", "hx", 1, 0.0, 2.0);
+    TH1D * hy = new TH1D("hy", "hy", 1, 0.0, 2.0);
+    TH1D * hz = new TH1D("hz", "hz", 1, 0.0, 2.0);
+    TH1D * hQ2 = new TH1D("hQ2", "hQ2", 1, 0.0, 2.0);
+    TH1D * hPt = new TH1D("hPt", "hPt", 1, 0.0, 2.0);
+    TH1D * hphih = new TH1D("hphih", "hphih", 1, 0.0, 2.0);
+    TH1D * hphiS = new TH1D("hphiS", "hphiS", 1, 0.0, 2.0);
+    TH1D * hze = new TH1D("hze", "hze", 1.0, 0.0, 2.0);
+    TH1D * hzpi = new TH1D("hzpi", "hzpi", 1.0, 0.0, 2.0);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (kin[4] < Ptl || kin[4] > Ptu) continue;
+      if (kin[0] < xl || kin[0] > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigma);
+      CalRMS(lab, rms, 100);
+      dz_e = _z_e->GetBinContent(_z_e->GetXaxis()->FindBin(lab[1]),_z_e->GetYaxis()->FindBin(lab[2]));
+      dz_pi = _z_pi->GetBinContent(_z_pi->GetXaxis()->FindBin(lab[4]),_z_pi->GetYaxis()->FindBin(lab[5]));
+      h0->Fill(1.0, sigma[1]*acc_ele*acc_pion[1]);
+      hx->Fill(1.0, rms[0]*sigma[1]*acc_ele*acc_pion[1]);
+      hy->Fill(1.0, rms[1]*sigma[1]*acc_ele*acc_pion[1]);
+      hz->Fill(1.0, rms[2]*sigma[1]*acc_ele*acc_pion[1]);
+      hQ2->Fill(1.0, rms[3]*sigma[1]*acc_ele*acc_pion[1]);
+      hPt->Fill(1.0, rms[4]*sigma[1]*acc_ele*acc_pion[1]);
+      hphih->Fill(1.0, rms[5]*sigma[1]*acc_ele*acc_pion[1]);
+      hphiS->Fill(1.0, rms[6]*sigma[1]*acc_ele*acc_pion[1]);
+      hze->Fill(1.0, dz_e*sigma[1]*acc_ele*acc_pion[1]);
+      hzpi->Fill(1.0, dz_pi*sigma[1]*acc_ele*acc_pion[1]);
+    }
+    rms[0] = hx->Integral(1, -1) / h0->Integral(1, -1);
+    rms[1] = hy->Integral(1, -1) / h0->Integral(1, -1);
+    rms[2] = hz->Integral(1, -1) / h0->Integral(1, -1);
+    rms[3] = hQ2->Integral(1, -1) / h0->Integral(1, -1);
+    rms[4] = hPt->Integral(1, -1) / h0->Integral(1, -1);
+    rms[5] = hphih->Integral(1, -1) / h0->Integral(1, -1);
+    rms[6] = hphiS->Integral(1, -1) / h0->Integral(1, -1);
+    dz_e = hze->Integral(1, -1) / h0->Integral(1, -1);
+    dz_pi = hzpi->Integral(1, -1) / h0->Integral(1, -1);
+    Rm->Fill();
+    h0->Delete();
+    hx->Delete();
+    hy->Delete();
+    hz->Delete();
+    hQ2->Delete();
+    hPt->Delete();
+    hphih->Delete();
+    hphiS->Delete();
+    hze->Delete();
+    hzpi->Delete();
+    Tdata->Delete();
+  }
+  fs->Write();
+  return 0;
+}
+
+
 int Lanalysis::ThreetermMatrix(const double * hr, double * M3inv){
   double a = hr[0];
   double b = hr[1];
@@ -965,16 +1238,23 @@ int Lanalysis::EPolarizationDirection(const double * Asym, double * EtarPD){
   return 0;
 } 
 
-TFile * _file_e = new TFile("/var/phy/project/mepg/tl190/SIDIS/SIDIS_electron_resolution_2d.root","r");
-TH2D * _theta_e = (TH2D *) _file_e->GetObjectChecked("theta_resolution","TH2D");
-TH2D * _phi_e = (TH2D *) _file_e->GetObjectChecked("phi_resolution","TH2D");
-TH2D * _p_e = (TH2D *) _file_e->GetObjectChecked("p_resolution","TH2D");
-TH2D * _z_e = (TH2D *) _file_e->GetObjectChecked("vertexz_resolution","TH2D");
-TFile * _file_pi = new TFile("/var/phy/project/mepg/tl190/SIDIS/SIDIS_pim_resolution_2d.root","r");
-TH2D * _theta_pi = (TH2D *) _file_e->GetObjectChecked("theta_resolution","TH2D");
-TH2D * _phi_pi = (TH2D *) _file_e->GetObjectChecked("phi_resolution","TH2D");
-TH2D * _p_pi = (TH2D *) _file_e->GetObjectChecked("p_resolution","TH2D");
-TH2D * _z_pi = (TH2D *) _file_e->GetObjectChecked("vertexz_resolution","TH2D");
+int Lanalysis::GetResolutionFiles(){
+  if (_res_ctrl){
+    return 1;
+  }
+  _file_e = new TFile("/var/phy/project/mepg/tl190/SoLID-SIDIS/SIDIS_electron_resolution_2d.root","r");
+  _theta_e = (TH2D *) _file_e->GetObjectChecked("theta_resolution","TH2D");
+  _phi_e = (TH2D *) _file_e->GetObjectChecked("phi_resolution","TH2D");
+  _p_e = (TH2D *) _file_e->GetObjectChecked("p_resolution","TH2D");
+  _z_e = (TH2D *) _file_e->GetObjectChecked("vertexz_resolution","TH2D");
+  _file_pi = new TFile("/var/phy/project/mepg/tl190/SoLID-SIDIS/SIDIS_pim_resolution_2d.root","r");
+  _theta_pi = (TH2D *) _file_e->GetObjectChecked("theta_resolution","TH2D");
+  _phi_pi = (TH2D *) _file_e->GetObjectChecked("phi_resolution","TH2D");
+  _p_pi = (TH2D *) _file_e->GetObjectChecked("p_resolution","TH2D");
+  _z_pi = (TH2D *) _file_e->GetObjectChecked("vertexz_resolution","TH2D");
+  _res_ctrl = 1;
+  return 0;
+}
 
 int Lanalysis::CalRMS(double * lab, double * rms, int calls = 100){
   //lab: Ebeam, p_ele, theta_ele, phi_ele, p_pion, theta_pion, phi_pion
