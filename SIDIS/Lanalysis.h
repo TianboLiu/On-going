@@ -1156,8 +1156,8 @@ int Lanalysis::ECoincidenceNeutron(const char bintree[], const char rmstree[], c
   double lab[7];
   double x, Pt;
   std::cout << "Random coincidence: pi+" << std::endl;
-  for (int nb = 12; nb < 13; nb++){
-    //for (int nb = 0; nb < Nbinp; nb++){
+  //for (int nb = 12; nb < 13; nb++){
+  for (int nb = 0; nb < Nbinp; nb++){
     Tp->GetEntry(nb);
     Rp->GetEntry(nb);
     std::cout << "#" << nb << " in " << Nbinp << std::endl;
@@ -1207,14 +1207,14 @@ int Lanalysis::ECoincidenceNeutron(const char bintree[], const char rmstree[], c
     fv = 40.0 / Lv;
     Ncoin = (h0->Integral(1, -1)) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
     SB = Nacc / (Ncoin / fv);
-    ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv) / (Nacc + Ncoin); 
+    ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv / fv) / (Nacc + Ncoin / fv); 
     Cp->Fill();
     h0->Delete();
     Tdata->Delete();
   }
   std::cout << "Random coincidence: pi-" << std::endl;
-  for (int nb = 0; nb < 1; nb++){
-    //for (int nb = 0; nb < Nbinm; nb++){
+  //for (int nb = 0; nb < 1; nb++){
+  for (int nb = 0; nb < Nbinm; nb++){
     Tm->GetEntry(nb);
     Rm->GetEntry(nb);
     std::cout << "#" << nb << " in " << Nbinm << std::endl;
@@ -1264,7 +1264,7 @@ int Lanalysis::ECoincidenceNeutron(const char bintree[], const char rmstree[], c
     fv = 40.0 / Lv;
     Ncoin = (h0->Integral(1, -1)) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
     SB = Nacc / (Ncoin / fv);
-    ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv) / (Nacc + Ncoin); 
+    ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv / fv) / (Nacc + Ncoin / fv); 
     Cm->Fill();
     h0->Delete();
     Tdata->Delete();
