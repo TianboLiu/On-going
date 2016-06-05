@@ -56,6 +56,8 @@ class Lanalysis{
   int BinAnalysisProton(const char savefile[]);
   int BinResolutionNeutron(const char bintree[], const char savefile[]);
   int BinResolutionProton(const char bintree[], const char savefile[]);
+  int ECoincidenceNeutron(const char bintree[], const char rmstree[], const char savefile[]);
+  int ECoincidenceProton(const char bintree[], const char rmstree[], const char savefile[]);
   int ThreetermMatrix(const double * hr, double * M3inv);
   double Threeterm1(const double * coef, const double * phih);
   double Threeterm2(const double * coef, const double * phi);
@@ -72,7 +74,7 @@ class Lanalysis{
   int ECoincidence(const double * Asym, TH1D * hsb, double * Ecoin); 
   int CalRMS(double * lab, double * rms, int calls);
   double GetVertexFactor(const double * lab, const double length);
-  double RandomCoincidentSigma(const double * lab, int hadron);
+  int RandomCoincidentSigma(const double * lab, double * xs);
 };
 
 Lanalysis::Lanalysis(TString datadir){
@@ -1087,6 +1089,189 @@ int Lanalysis::BinResolutionNeutron(const char bintree[], const char savefile[])
   return 0;
 }
 
+int Lanalysis::ECoincidenceNeutron(const char bintree[], const char rmstree[], const char savefile[]){
+  double dt = 6.0e-9;
+  double fv = 1.0;
+  double scale_e = 1.0;
+  double scale_pi = 1.0;
+  TFile * fb = new TFile(bintree, "r");
+  TTree * Tp = (TTree *) fb->Get("binplus");
+  double Nbinp = Tp->GetEntries();
+  TTree * Tm = (TTree *) fb->Get("binminus");
+  double Nbinm = Tm->GetEntries();
+  double BinNumber;
+  double zm, Q2m, xl, xu, Ptl, Ptu;
+  double Nacc;
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("zm", &zm);
+  Tp->SetBranchAddress("Q2m", &Q2m);
+  Tp->SetBranchAddress("xl", &xl);
+  Tp->SetBranchAddress("xu", &xu);
+  Tp->SetBranchAddress("Ptl", &Ptl);
+  Tp->SetBranchAddress("Ptu", &Ptu);
+  Tp->SetBranchAddress("Nacc", &Nacc);
+  Tm->SetBranchAddress("BinNumber", &BinNumber);
+  Tm->SetBranchAddress("zm", &zm);
+  Tm->SetBranchAddress("Q2m", &Q2m);
+  Tm->SetBranchAddress("xl", &xl);
+  Tm->SetBranchAddress("xu", &xu);
+  Tm->SetBranchAddress("Ptl", &Ptl);
+  Tm->SetBranchAddress("Ptu", &Ptu);
+  Tm->SetBranchAddress("Nacc", &Nacc);
+  TFile * fr = new TFile(rmstree, "r");
+  TTree * Rp = (TTree *) fr->Get("rmsplus");
+  TTree * Rm = (TTree *) fr->Get("rmsminus");
+  double dz_e, dz_pi;
+  double safe = 1.5;
+  Rp->SetBranchAddress("dz_e", &dz_e);
+  Rp->SetBranchAddress("dz_pi", &dz_pi);
+  Rm->SetBranchAddress("dz_e", &dz_e);
+  Rm->SetBranchAddress("dz_pi", &dz_pi);
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Cp = new TTree("coinplus", "coinplus");
+  Cp->SetDirectory(fs);
+  TTree * Cm = new TTree("coinminus", "coinminus");
+  Cm->SetDirectory(fs);
+  double Ncoin, SB, ErrRel, Lv;
+  Cp->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Cp->Branch("Nacc", &Nacc, "Nacc/D");
+  Cp->Branch("Ncoin", &Ncoin, "Ncoin/D");
+  Cp->Branch("SB", &SB, "SB/D");
+  Cp->Branch("Lv", &Lv, "Lv/D");
+  Cp->Branch("fv", &fv, "fv/D");
+  Cp->Branch("ErrRel", &ErrRel, "ErrRel/D");
+  Cm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Cm->Branch("Nacc", &Nacc, "Nacc/D");
+  Cm->Branch("Ncoin", &Ncoin, "Ncoin/D");
+  Cm->Branch("SB", &SB, "SB/D");
+  Cm->Branch("Lv", &Lv, "Lv/D");
+  Cm->Branch("fv", &fv, "fv/D");
+  Cm->Branch("ErrRel", &ErrRel, "ErrRel/D");
+  double acc_ele, acc_pion[2];
+  double sigma[2];
+  double AZ[4] = {2, 1, -0.028, 0.86};//total
+  TString nq, nz;
+  TString selectedfile;
+  Long64_t Nevent;
+  double lab[7];
+  double x, Pt;
+  std::cout << "Random coincidence: pi+" << std::endl;
+  for (int nb = 12; nb < 13; nb++){
+    //for (int nb = 0; nb < Nbinp; nb++){
+    Tp->GetEntry(nb);
+    Rp->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinp << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &x);
+    Tdata->SetBranchAddress("Pt", &Pt);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 1, 0.0, 2.0);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (Pt < Ptl || Pt > Ptu) continue;
+      if (x < xl || x > xu) continue;
+      RandomCoincidenceSigma(AZ, lab, sigma);
+      h0->Fill(1.0, sigma[0]*acc_ele*acc_pion[0]*dt);
+    }
+    Lv = 3.0 * (dz_e + dz_pi) * safe;
+    fv = 40.0 / Lv;
+    Ncoin = (h0->Integral(1, -1)) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
+    SB = Nacc / (Ncoin / fv);
+    ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv) / (Nacc + Ncoin); 
+    Cp->Fill();
+    h0->Delete();
+    Tdata->Delete();
+  }
+  std::cout << "Random coincidence: pi-" << std::endl;
+  for (int nb = 0; nb < 1; nb++){
+    //for (int nb = 0; nb < Nbinm; nb++){
+    Tm->GetEntry(nb);
+    Rm->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinm << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &x);
+    Tdata->SetBranchAddress("Pt", &Pt);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 1, 0.0, 2.0);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (Pt < Ptl || Pt > Ptu) continue;
+      if (x < xl || x > xu) continue;
+      RandomCoincidenceSigma(AZ, lab, sigma);
+      h0->Fill(1.0, sigma[1]*acc_ele*acc_pion[1]*dt);
+    }
+    Lv = 3.0 * (dz_e + dz_pi) * safe;
+    fv = 40.0 / Lv;
+    Ncoin = (h0->Integral(1, -1)) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
+    SB = Nacc / (Ncoin / fv);
+    ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv) / (Nacc + Ncoin); 
+    Cm->Fill();
+    h0->Delete();
+    Tdata->Delete();
+  }
+  fs->Write();
+  return 0;
+}
 
 int Lanalysis::ThreetermMatrix(const double * hr, double * M3inv){
   double a = hr[0];
@@ -1421,26 +1606,20 @@ int Lanalysis::EResolutionS(const double * hr, const double * Asym, TH2D * dS, d
   return 0;
 }
 
-double Lanalysis::RandomCoincidentSigma(const double * lab, int hadron){
+int Lanalysis::RandomCoincidentSigmaN(const double * AZ, const double * lab, double * xs){
   const double degtorad = M_PI / 180.0;
   double radlen;
   if (lab[0] == 11.0) radlen = 0.04896;
   if (lab[0] == 8.8) radlen = 0.04793;
-  double sigma_pi = wiser_sigma(lab[0], lab[4], lab[5] * degtorad, radlen, hadron) / 3.89379e+5;
+  double sigma_pip = wiser_sigma(lab[0], lab[4], lab[5] * degtorad, radlen, 0) / 3.89379e+5;
+  double sigma_pim = wiser_sigma(lab[0], lab[4], lab[5] * degtorad, radlen, 1) / 3.89379e+5;
   double sigma_e;
-  Lstructure::sigmaDISp(lab, &sigma_e);
-  //double vertexfactor = lan->GetVertexFactor(lab);
-  return sigma_e * sigma_pi * _lumi * 6e-9 / 1.0;
-}
-
-int Lanalysis::ECoincidence(const double * Asym, TH1D * hsb, double * Ecoin){
-  double sbratio = hsb->GetMean();
-  double relative = 0.2 / sbratio;
-  for (int i = 0; i < 3; i++){
-    Ecoin[i] = std::abs(Asym[i] * relative);
-  }
+  Lstructure::sigmaDISN(AZ, lab, &sigma_e);
+  xs[0] = sigma_e * sigma_pip * _lumi;
+  xs[1] = sigma_e * sigma_pim * _lumi;
   return 0;
 }
+
 
 
 
