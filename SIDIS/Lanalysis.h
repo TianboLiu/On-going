@@ -74,7 +74,7 @@ class Lanalysis{
   int ECoincidence(const double * Asym, TH1D * hsb, double * Ecoin); 
   int CalRMS(double * lab, double * rms, int calls);
   double GetVertexFactor(const double * lab, const double length);
-  int RandomCoincidentSigma(const double * lab, double * xs);
+  int RandomCoincidenceSigmaN(const double * AZ, const double * lab, double * xs);
 };
 
 Lanalysis::Lanalysis(TString datadir){
@@ -1200,7 +1200,7 @@ int Lanalysis::ECoincidenceNeutron(const char bintree[], const char rmstree[], c
       Tdata->GetEntry(ie);
       if (Pt < Ptl || Pt > Ptu) continue;
       if (x < xl || x > xu) continue;
-      RandomCoincidenceSigma(AZ, lab, sigma);
+      RandomCoincidenceSigmaN(AZ, lab, sigma);
       h0->Fill(1.0, sigma[0]*acc_ele*acc_pion[0]*dt);
     }
     Lv = 3.0 * (dz_e + dz_pi) * safe;
@@ -1257,7 +1257,7 @@ int Lanalysis::ECoincidenceNeutron(const char bintree[], const char rmstree[], c
       Tdata->GetEntry(ie);
       if (Pt < Ptl || Pt > Ptu) continue;
       if (x < xl || x > xu) continue;
-      RandomCoincidenceSigma(AZ, lab, sigma);
+      RandomCoincidenceSigmaN(AZ, lab, sigma);
       h0->Fill(1.0, sigma[1]*acc_ele*acc_pion[1]*dt);
     }
     Lv = 3.0 * (dz_e + dz_pi) * safe;
@@ -1606,7 +1606,7 @@ int Lanalysis::EResolutionS(const double * hr, const double * Asym, TH2D * dS, d
   return 0;
 }
 
-int Lanalysis::RandomCoincidentSigmaN(const double * AZ, const double * lab, double * xs){
+int Lanalysis::RandomCoincidenceSigmaN(const double * AZ, const double * lab, double * xs){
   const double degtorad = M_PI / 180.0;
   double radlen;
   if (lab[0] == 11.0) radlen = 0.04896;
