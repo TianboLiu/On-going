@@ -99,7 +99,18 @@ int main(int argc, char* argv[]){
     double days = 48.0;
     double ST = 0.6;
     N11.SetSimInfo(lumi, days, ST, 1);
-    N11.ECoincidenceNeutron(bintree, rmstree, "sidiscoin_11.root");
+    N11.ECoincidenceNeutron(bintree, rmstree, "Neutron/sidiscoin_11.root");
+  }
+  if (true){// Random coincidence N8
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
+    TString bintree = "Neutron/sidisbin_8.root";
+    TString rmstree = "Neutron/sidisrms_8.root";
+    Lanalysis N8(datadir);
+    double lumi = 1.0e+10 * pow(0.197327, 2);
+    double days = 21.0;
+    double ST = 0.6;
+    N8.SetSimInfo(lumi, days, ST, 1);
+    N8.ECoincidenceNeutron(bintree, rmstree, "Neutron/sidiscoin_8.root");
   }
 
   return 0;
