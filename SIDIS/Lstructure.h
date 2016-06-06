@@ -17,6 +17,10 @@ class Lstructure{
   static int f1p(const double * var, double * f1, const char set[]);
   static int f1n(const double * var, double * f1, const char set[]);
   static int f1N(const double * AZ, const double * var, double * f1, const char set[]);
+  /* real nuclear PDF */
+  static int f1_n32(const double * var, double * f1);//Helium-3
+  static int f1_n126(const double * var, double * f1);//Carbon-12
+  static int f1_n147(const double * var, double * f1);//Nitrogen-14
   /* helicity */
   static int g1_grsv(const double * var, double * g1);
   static int g1_dssv(const double * var, double * g1);
@@ -174,6 +178,50 @@ int Lstructure::f1N(const double * AZ, const double * var, double * f1, const ch
   return 0;
 }
 
+const LHAPDF::PDF * _npdfs_3_2 = LHAPDF::mkPDF("nCTEQ15FullNuc_3_2", 0);
+int Lstructure::f1_n32(const double * var, double * f1){
+  //var: x, Q2
+  double x = var[0];
+  double Q2 = var[1];
+  //f1: u, d, s, ubar, dbar, sbar
+  f1[0] = _npdfs_3_2->xfxQ2(2, x, Q2) / x * 3.0;//u
+  f1[1] = _npdfs_3_2->xfxQ2(1, x, Q2) / x * 3.0;//d
+  f1[2] = _npdfs_3_2->xfxQ2(3, x, Q2) / x * 3.0;//s
+  f1[3] = _npdfs_3_2->xfxQ2(-2, x, Q2) / x * 3.0;//ubar
+  f1[4] = _npdfs_3_2->xfxQ2(-1, x, Q2) / x * 3.0;//dbar
+  f1[5] = _npdfs_3_2->xfxQ2(-3, x, Q2) / x * 3.0;//sbar
+  return 0;
+}
+
+const LHAPDF::PDF * _npdfs_12_6 = LHAPDF::mkPDF("nCTEQ15FullNuc_12_6", 0);
+int Lstructure::f1_n126(const double * var, double * f1){
+  //var: x, Q2
+  double x = var[0];
+  double Q2 = var[1];
+  //f1: u, d, s, ubar, dbar, sbar
+  f1[0] = _npdfs_12_6->xfxQ2(2, x, Q2) / x * 12.0;//u
+  f1[1] = _npdfs_12_6->xfxQ2(1, x, Q2) / x * 12.0;//d
+  f1[2] = _npdfs_12_6->xfxQ2(3, x, Q2) / x * 12.0;//s
+  f1[3] = _npdfs_12_6->xfxQ2(-2, x, Q2) / x * 12.0;//ubar
+  f1[4] = _npdfs_12_6->xfxQ2(-1, x, Q2) / x * 12.0;//dbar
+  f1[5] = _npdfs_12_6->xfxQ2(-3, x, Q2) / x * 12.0;//sbar
+  return 0;
+}
+
+const LHAPDF::PDF * _npdfs_14_7 = LHAPDF::mkPDF("nCTEQ15FullNuc_14_7", 0);
+int Lstructure::f1_n147(const double * var, double * f1){
+  //var: x, Q2
+  double x = var[0];
+  double Q2 = var[1];
+  //f1: u, d, s, ubar, dbar, sbar
+  f1[0] = _npdfs_14_7->xfxQ2(2, x, Q2) / x * 14.0;//u
+  f1[1] = _npdfs_14_7->xfxQ2(1, x, Q2) / x * 14.0;//d
+  f1[2] = _npdfs_14_7->xfxQ2(3, x, Q2) / x * 14.0;//s
+  f1[3] = _npdfs_14_7->xfxQ2(-2, x, Q2) / x * 14.0;//ubar
+  f1[4] = _npdfs_14_7->xfxQ2(-1, x, Q2) / x * 14.0;//dbar
+  f1[5] = _npdfs_14_7->xfxQ2(-3, x, Q2) / x * 14.0;//sbar
+  return 0;
+}
 
 extern "C"{
   extern struct { double IINI;} gintini_;
