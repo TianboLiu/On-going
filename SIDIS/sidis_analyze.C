@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
   }
 
   /*****************************************/
-  if (true){// Random coincidence N11
+  if (false){// Random coincidence N11
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
     TString bintree = "Neutron/sidisbin_11.root";
     TString rmstree = "Neutron/sidisrms_11.root";
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]){
     N11.SetSimInfo(lumi, days, ST, 1);
     N11.ECoincidenceNeutron(bintree, rmstree, "Neutron/sidiscoin_11.root");
   }
-  if (true){// Random coincidence N8
+  if (false){// Random coincidence N8
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
     TString bintree = "Neutron/sidisbin_8.root";
     TString rmstree = "Neutron/sidisrms_8.root";
@@ -112,6 +112,25 @@ int main(int argc, char* argv[]){
     N8.SetSimInfo(lumi, days, ST, 1);
     N8.ECoincidenceNeutron(bintree, rmstree, "Neutron/sidiscoin_8.root");
   }
-
+  if (true){// Random coincidence P11
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526P11";
+    TString bintree = "Proton/sidisbin_11.root";
+    Lanalysis P11(datadir);
+    double lumi = 1.0e+9 * pow(0.197327, 2);
+    double days = 55.0;
+    double ST = 0.7;
+    P11.SetSimInfo(lumi, days, ST, 1);
+    P11.ECoincidenceProton(bintree, "", "Proton/sidiscoin_11.root");
+  }
+  if (true){// Random coincidence P8
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526P8";
+    TString bintree = "Proton/sidisbin_8.root";
+    Lanalysis P8(datadir);
+    double lumi = 1.0e+9 * pow(0.197327, 2);
+    double days = 27.5;
+    double ST = 0.7;
+    P8.SetSimInfo(lumi, days, ST, 1);
+    P8.ECoincidenceProton(bintree, "", "Proton/sidiscoin_8.root");
+  }
   return 0;
 }
