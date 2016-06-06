@@ -71,7 +71,6 @@ class Lanalysis{
   int GetResolutionFiles();
   int EResolutionH(const double * hr, const double * Asym, TH2D * dH, double * EresH);
   int EResolutionS(const double * hr, const double * Asym, TH2D * dS, double * EresS);
-  int ECoincidence(const double * Asym, TH1D * hsb, double * Ecoin); 
   int CalRMS(double * lab, double * rms, int calls);
   double GetVertexFactor(const double * lab, const double length);
   int RandomCoincidenceSigmaN(const double * AZ, const double * lab, double * xs);
@@ -1324,7 +1323,7 @@ int Lanalysis::ECoincidenceProton(const char bintree[], const char rmstree[], co
   Cm->Branch("ErrRel", &ErrRel, "ErrRel/D");
   double acc_ele, acc_pion[2];
   double sigma[2];
-  double AZ[4] = {2, 1, -0.028, 0.86};//total
+  double AZ[4] = {0.334*10.0+0.593*2.0, 0.334*7.0+0.593*2.0, 0.22, 0};//total
   TString nq, nz;
   TString selectedfile;
   Long64_t Nevent;
@@ -1334,7 +1333,6 @@ int Lanalysis::ECoincidenceProton(const char bintree[], const char rmstree[], co
   //for (int nb = 12; nb < 13; nb++){
   for (int nb = 0; nb < Nbinp; nb++){
     Tp->GetEntry(nb);
-    Rp->GetEntry(nb);
     std::cout << "#" << nb << " in " << Nbinp << std::endl;
     if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
     else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
@@ -1378,8 +1376,7 @@ int Lanalysis::ECoincidenceProton(const char bintree[], const char rmstree[], co
       RandomCoincidenceSigmaN(AZ, lab, sigma);
       h0->Fill(1.0, sigma[0]*acc_ele*acc_pion[0]*dt);
     }
-    Lv = 3.0 * (dz_e + dz_pi) * safe;
-    fv = 40.0 / Lv;
+    fv = 1.0;
     Ncoin = (h0->Integral(1, -1)) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
     SB = Nacc / (Ncoin / fv);
     ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv / fv) / (Nacc + Ncoin / fv); 
@@ -1391,7 +1388,6 @@ int Lanalysis::ECoincidenceProton(const char bintree[], const char rmstree[], co
   //for (int nb = 0; nb < 1; nb++){
   for (int nb = 0; nb < Nbinm; nb++){
     Tm->GetEntry(nb);
-    Rm->GetEntry(nb);
     std::cout << "#" << nb << " in " << Nbinm << std::endl;
     if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
     else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
@@ -1435,8 +1431,7 @@ int Lanalysis::ECoincidenceProton(const char bintree[], const char rmstree[], co
       RandomCoincidenceSigmaN(AZ, lab, sigma);
       h0->Fill(1.0, sigma[1]*acc_ele*acc_pion[1]*dt);
     }
-    Lv = 3.0 * (dz_e + dz_pi) * safe;
-    fv = 40.0 / Lv;
+    fv = 1.0;
     Ncoin = (h0->Integral(1, -1)) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
     SB = Nacc / (Ncoin / fv);
     ErrRel = sqrt(scale_e * scale_pi * Ncoin / fv / fv) / (Nacc + Ncoin / fv); 
