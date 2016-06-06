@@ -14,6 +14,7 @@
 #include "TChain.h"
 #include "TString.h"
 #include "TRandom.h"
+#include "TF1.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TMatrixD.h"
@@ -51,11 +52,14 @@ class Lanalysis{
   Lanalysis(TString datadir);
   Lanalysis(TString datadir, TString binfile1, TString binfile2);
   static int MakeBinInfoTree(const char bininfo[], const char bintree[], const double E0);
+  static int FitCos1(TH1D * h0, const double * range, double * cc);
   int SetSimInfo(double lumi, double days, double ST, int Ntree);
   int BinAnalysisNeutron(const char savefile[]);
   int BinAnalysisProton(const char savefile[]);
   int BinResolutionNeutron(const char bintree[], const char savefile[]);
   int BinResolutionProton(const char bintree[], const char savefile[]);
+  int BinAcceptanceNeutron(const char bintree[], const char savefile[]);
+  int BinAcceptanceProton(const char bintree[], const char savefile[]);
   int ECoincidenceNeutron(const char bintree[], const char rmstree[], const char savefile[]);
   int ECoincidenceProton(const char bintree[], const char rmstree[], const char savefile[]);
   int ThreetermMatrix(const double * hr, double * M3inv);
@@ -119,6 +123,20 @@ int Lanalysis::MakeBinInfoTree(const char bininfo[], const char bintree[], const
   }
   infile.close();
   fbin->Write();
+  return 0;
+}
+
+int Lanalysis::FitCos1(TH1D * h0, const double * range, double * cc){
+  TF1 * fc = new TF1("fc", "[0]*(1.0+[1]*cos(x)+[2]*cos(2.0*x)+[3]*cos(3.0*x)+[4]*cos(4.0*x)+[5]*cos(5.0*x))", 0.0, M_PI);
+  fc->SetParameters(h0->Integral(1, -1), 0.0, 0.0, 0.0, 0.0, 0.0);
+  h0->Fit("fc", "WIQ", "", range[0], range[1]);
+  TF1 * rs = h0->GetFunction("fc");
+  cc[0] = rs->GetParameter(0);
+  cc[1] = rs->GetParameter(1);
+  cc[2] = rs->GetParameter(2);
+  cc[3] = rs->GetParameter(3);
+  cc[4] = rs->GetParameter(4);
+  cc[5] = rs->GetParameter(5);
   return 0;
 }
 
@@ -1082,6 +1100,174 @@ int Lanalysis::BinResolutionNeutron(const char bintree[], const char savefile[])
     hphiS->Delete();
     hze->Delete();
     hzpi->Delete();
+    Tdata->Delete();
+  }
+  fs->Write();
+  return 0;
+}
+
+int Lanalysis::BinAcceptanceNeutron(const char bintree[], const char savefile[]){
+  TFile * fb = new TFile(bintree, "r");
+  TTree * Tp = (TTree *) fb->Get("binplus");
+  double Nbinp = Tp->GetEntries();
+  TTree * Tm = (TTree *) fb->Get("binminus");
+  double Nbinm = Tm->GetEntries();
+  double BinNumber;
+  double zm, Q2m, xl, xu, Ptl, Ptu;
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("zm", &zm);
+  Tp->SetBranchAddress("Q2m", &Q2m);
+  Tp->SetBranchAddress("xl", &xl);
+  Tp->SetBranchAddress("xu", &xu);
+  Tp->SetBranchAddress("Ptl", &Ptl);
+  Tp->SetBranchAddress("Ptu", &Ptu);
+  Tm->SetBranchAddress("BinNumber", &BinNumber);
+  Tm->SetBranchAddress("zm", &zm);
+  Tm->SetBranchAddress("Q2m", &Q2m);
+  Tm->SetBranchAddress("xl", &xl);
+  Tm->SetBranchAddress("xu", &xu);
+  Tm->SetBranchAddress("Ptl", &Ptl);
+  Tm->SetBranchAddress("Ptu", &Ptu);
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Ap = new TTree("accplus", "accplus");
+  Ap->SetDirectory(fs);
+  TTree * Am = new TTree("accminus", "accminus");
+  Am->SetDirectory(fs);
+  double cc[6], range[2];
+  Ap->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Ap->Branch("ha", &range[0], "ha/D");
+  Ap->Branch("hb", &range[1], "hb/D");
+  Ap->Branch("c0", &cc[0], "c0/D");
+  Ap->Branch("c1", &cc[1], "c1/D");
+  Ap->Branch("c2", &cc[2], "c2/D");
+  Ap->Branch("c3", &cc[3], "c3/D");
+  Ap->Branch("c4", &cc[4], "c4/D");
+  Ap->Branch("c5", &cc[5], "c5/D");
+  Am->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Am->Branch("ha", &range[0], "ha/D");
+  Am->Branch("hb", &range[1], "hb/D");
+  Am->Branch("c0", &cc[0], "c0/D");
+  Am->Branch("c1", &cc[1], "c1/D");
+  Am->Branch("c2", &cc[2], "c2/D");
+  Am->Branch("c3", &cc[3], "c3/D");
+  Am->Branch("c4", &cc[4], "c4/D");
+  Am->Branch("c5", &cc[5], "c5/D");
+  double acc_ele, acc_pion[2];
+  double sigma[2];
+  double AZ[4] = {2, 1, -0.028, 0.86};//total
+  TString nq, nz;
+  TString selectedfile;
+  Long64_t Nevent;
+  double lab[7];
+  double x, Pt, phih;
+  std::cout << "Bin acceptance: pi+" << std::endl;
+  //for (int nb = 12; nb < 13; nb++){
+  for (int nb = 0; nb < Nbinp; nb++){
+    Tp->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinp << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &x);
+    Tdata->SetBranchAddress("Pt", &Pt);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("phi_h", &phih);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 360, 0.0, M_PI);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (Pt < Ptl || Pt > Ptu) continue;
+      if (x < xl || x > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigma);
+      h0->Fill(std::abs(phih), sigma[0]*acc_ele*acc_pion[0]);
+    }
+    range[0] = h0->GetBinCenter(h0->FindFirstBinAbove());
+    range[1] = h0->GetBinCenter(h0->FindLastBinAbove());
+    FitCos1(h0, range, cc);
+    Ap->Fill();
+    h0->Delete();
+    Tdata->Delete();
+  }
+  std::cout << "Bin acceptance: pi-" << std::endl;
+  //for (int nb = 12; nb < 13; nb++){
+  for (int nb = 0; nb < Nbinm; nb++){
+    Tp->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinm << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &x);
+    Tdata->SetBranchAddress("Pt", &Pt);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("phi_h", &phih);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 360, 0.0, M_PI);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (Pt < Ptl || Pt > Ptu) continue;
+      if (x < xl || x > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigma);
+      h0->Fill(std::abs(phih), sigma[1]*acc_ele*acc_pion[1]);
+    }
+    range[0] = h0->GetBinCenter(h0->FindFirstBinAbove());
+    range[1] = h0->GetBinCenter(h0->FindLastBinAbove());
+    FitCos1(h0, range, cc);
+    Am->Fill();
+    h0->Delete();
     Tdata->Delete();
   }
   fs->Write();
