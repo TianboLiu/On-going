@@ -15,8 +15,10 @@
 #include "TString.h"
 #include "TRandom.h"
 #include "TF1.h"
+#include "TF2.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TMath.h"
 #include "TMatrixD.h"
 #include "TEventList.h"
 
@@ -53,6 +55,7 @@ class Lanalysis{
   Lanalysis(TString datadir, TString binfile1, TString binfile2);
   static int MakeBinInfoTree(const char bininfo[], const char bintree[], const double E0);
   static int FitCos1(TH1D * h0, const double * range, double * cc);
+  static int FitCosSin1(TH1D * h0, const double * range, double * cc);
   int SetSimInfo(double lumi, double days, double ST, int Ntree);
   int BinAnalysisNeutron(const char savefile[]);
   int BinAnalysisProton(const char savefile[]);
@@ -62,6 +65,7 @@ class Lanalysis{
   int BinAcceptanceProton(const char bintree[], const char savefile[]);
   int ECoincidenceNeutron(const char bintree[], const char rmstree[], const char savefile[]);
   int ECoincidenceProton(const char bintree[], const char rmstree[], const char savefile[]);
+  int EResolutionNeutron(const char bintree[], const char rmstree[], const char acctree[], const char savefile[]);
   int ThreetermMatrix(const double * hr, double * M3inv);
   double Threeterm1(const double * coef, const double * phih);
   double Threeterm2(const double * coef, const double * phi);
@@ -140,6 +144,25 @@ int Lanalysis::FitCos1(TH1D * h0, const double * range, double * cc){
   return 0;
 }
 
+int Lanalysis::FitCosSin1(TH1D * h0, const double * range, double * cc){
+  TF1 * fc = new TF1("fc", "[0]*(1.0+[1]*cos(x)+[2]*cos(2.0*x)+[3]*cos(3.0*x)+[4]*cos(4.0*x)+[5]*cos(5.0*x)+[6]*sin(x)+[7]*sin(2.0*x)+[8]*sin(3.0*x)+[9]*sin(4.0*x)+[10]*sin(5.0*x))", -M_PI, M_PI);
+  fc->SetParameters(h0->Integral(1, -1), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  h0->Fit("fc", "WIQO", "", range[0], range[1]);
+  TF1 * rs = h0->GetFunction("fc");
+  cc[0] = rs->GetParameter(0);
+  cc[1] = rs->GetParameter(1);
+  cc[2] = rs->GetParameter(2);
+  cc[3] = rs->GetParameter(3);
+  cc[4] = rs->GetParameter(4);
+  cc[5] = rs->GetParameter(5);
+  cc[6] = rs->GetParameter(6);
+  cc[7] = rs->GetParameter(7);
+  cc[8] = rs->GetParameter(8);
+  cc[9] = rs->GetParameter(9);
+  cc[10] = rs->GetParameter(10);
+  return 0;
+}
+  
 int Lanalysis::SetSimInfo(double lumi, double days, double ST, int Ntree){
   _eff = 0.85;
   _lumi = lumi;
@@ -1274,6 +1297,184 @@ int Lanalysis::BinAcceptanceNeutron(const char bintree[], const char savefile[])
   return 0;
 }
 
+int Lanalysis::BinAcceptanceProton(const char bintree[], const char savefile[]){
+  TFile * fb = new TFile(bintree, "r");
+  TTree * Tp = (TTree *) fb->Get("binplus");
+  double Nbinp = Tp->GetEntries();
+  TTree * Tm = (TTree *) fb->Get("binminus");
+  double Nbinm = Tm->GetEntries();
+  double BinNumber;
+  double zm, Q2m, xl, xu, Ptl, Ptu;
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("zm", &zm);
+  Tp->SetBranchAddress("Q2m", &Q2m);
+  Tp->SetBranchAddress("xl", &xl);
+  Tp->SetBranchAddress("xu", &xu);
+  Tp->SetBranchAddress("Ptl", &Ptl);
+  Tp->SetBranchAddress("Ptu", &Ptu);
+  Tm->SetBranchAddress("BinNumber", &BinNumber);
+  Tm->SetBranchAddress("zm", &zm);
+  Tm->SetBranchAddress("Q2m", &Q2m);
+  Tm->SetBranchAddress("xl", &xl);
+  Tm->SetBranchAddress("xu", &xu);
+  Tm->SetBranchAddress("Ptl", &Ptl);
+  Tm->SetBranchAddress("Ptu", &Ptu);
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Ap = new TTree("accplus", "accplus");
+  Ap->SetDirectory(fs);
+  TTree * Am = new TTree("accminus", "accminus");
+  Am->SetDirectory(fs);
+  double cc[11], range[2];
+  Ap->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Ap->Branch("ha", &range[0], "ha/D");
+  Ap->Branch("hb", &range[1], "hb/D");
+  Ap->Branch("c0", &cc[0], "c0/D");
+  Ap->Branch("c1", &cc[1], "c1/D");
+  Ap->Branch("c2", &cc[2], "c2/D");
+  Ap->Branch("c3", &cc[3], "c3/D");
+  Ap->Branch("c4", &cc[4], "c4/D");
+  Ap->Branch("c5", &cc[5], "c5/D");
+  Ap->Branch("c6", &cc[6], "c6/D");
+  Ap->Branch("c7", &cc[7], "c7/D");
+  Ap->Branch("c8", &cc[8], "c8/D");
+  Ap->Branch("c9", &cc[9], "c9/D");
+  Ap->Branch("c10", &cc[10], "c10/D");
+  Am->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Am->Branch("ha", &range[0], "ha/D");
+  Am->Branch("hb", &range[1], "hb/D");
+  Am->Branch("c0", &cc[0], "c0/D");
+  Am->Branch("c1", &cc[1], "c1/D");
+  Am->Branch("c2", &cc[2], "c2/D");
+  Am->Branch("c3", &cc[3], "c3/D");
+  Am->Branch("c4", &cc[4], "c4/D");
+  Am->Branch("c5", &cc[5], "c5/D");
+  Am->Branch("c6", &cc[6], "c6/D");
+  Am->Branch("c7", &cc[7], "c7/D");
+  Am->Branch("c8", &cc[8], "c8/D");
+  Am->Branch("c9", &cc[9], "c9/D");
+  Am->Branch("c10", &cc[10], "c10/D");
+  double acc_ele, acc_pion[2];
+  double sigma[2];
+  double AZ[4] = {0.334*10.0+0.593*2.0, 0.334*7.0+0.593*2.0, 0.22, 0};//total
+  TString nq, nz;
+  TString selectedfile;
+  Long64_t Nevent;
+  double lab[7];
+  double x, Pt, phih;
+  std::cout << "Bin acceptance: pi+" << std::endl;
+  //for (int nb = 12; nb < 13; nb++){
+  for (int nb = 0; nb < Nbinp; nb++){
+    Tp->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinp << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &x);
+    Tdata->SetBranchAddress("Pt", &Pt);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("phi_h", &phih);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 360, -M_PI, M_PI);
+    for (double ie = 0; ie < Nevent; ie = ie + 1){
+      Tdata->GetEntry(ie);
+      if (Pt < Ptl || Pt > Ptu) continue;
+      if (x < xl || x > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigma);
+      h0->Fill(phih, sigma[0]*acc_ele*acc_pion[0]);
+    }
+    range[0] = h0->GetBinCenter(h0->FindFirstBinAbove());
+    range[1] = h0->GetBinCenter(h0->FindLastBinAbove());
+    FitCosSin1(h0, range, cc);
+    Ap->Fill();
+    h0->Delete();
+    Tdata->Delete();
+  }
+  std::cout << "Bin acceptance: pi-" << std::endl;
+  //for (int nb = 12; nb < 13; nb++){
+  for (int nb = 0; nb < Nbinm; nb++){
+    Tp->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinm << std::endl;
+    if (Q2m >= 1.0 && Q2m < 2.0) nq = "1";
+    else if (Q2m >= 2.0 && Q2m < 3.0) nq = "2";
+    else if (Q2m >= 3.0 && Q2m < 4.0) nq = "3";
+    else if (Q2m >= 4.0 && Q2m < 5.0) nq = "4";
+    else if (Q2m >= 5.0 && Q2m < 6.0) nq = "5";
+    else if (Q2m >= 6.0) nq = "6";
+    else continue;
+    if (zm >= 0.3 && zm < 0.35) nz = "30";
+    else if (zm >= 0.35 && zm < 0.40) nz = "35";
+    else if (zm >= 0.40 && zm < 0.45) nz = "40";
+    else if (zm >= 0.45 && zm < 0.50) nz = "45";
+    else if (zm >= 0.50 && zm < 0.55) nz = "50";
+    else if (zm >= 0.55 && zm < 0.60) nz = "55";
+    else if (zm >= 0.60 && zm < 0.65) nz = "60";
+    else if (zm >= 0.65) nz = "65";
+    else continue;
+    selectedfile = "sidis_select"+nq+nz+".root";
+    TChain * Tdata = new TChain("T", "T");
+    for (int it = 0; it < _Ntree; it++){
+      Tdata->Add(Form(_datadir+"/out%.2d/Selected/"+selectedfile, it));
+    }
+    Nevent = Tdata->GetEntries();
+    Tdata->SetBranchAddress("x", &x);
+    Tdata->SetBranchAddress("Pt", &Pt);
+    Tdata->SetBranchAddress("Ebeam", &lab[0]);
+    Tdata->SetBranchAddress("p_ele", &lab[1]);
+    Tdata->SetBranchAddress("theta_ele", &lab[2]);
+    Tdata->SetBranchAddress("phi_ele", &lab[3]);
+    Tdata->SetBranchAddress("p_pion", &lab[4]);
+    Tdata->SetBranchAddress("theta_pion", &lab[5]);
+    Tdata->SetBranchAddress("phi_pion", &lab[6]);
+    Tdata->SetBranchAddress("phi_h", &phih);
+    Tdata->SetBranchAddress("acc_ele", &acc_ele);
+    Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
+    Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
+    TH1D * h0 = new TH1D("h0", "h0", 360, -M_PI, M_PI);
+    for (int ie = 0; ie < Nevent; ie++){
+      Tdata->GetEntry(ie);
+      if (Pt < Ptl || Pt > Ptu) continue;
+      if (x < xl || x > xu) continue;
+      Lstructure::sigmaUUT(AZ, lab, sigma);
+      h0->Fill(phih, sigma[1]*acc_ele*acc_pion[1]);
+    }
+    range[0] = h0->GetBinCenter(h0->FindFirstBinAbove());
+    range[1] = h0->GetBinCenter(h0->FindLastBinAbove());
+    FitCosSin1(h0, range, cc);
+    Am->Fill();
+    h0->Delete();
+    Tdata->Delete();
+  }
+  fs->Write();
+  return 0;
+}
+
 int Lanalysis::ECoincidenceNeutron(const char bintree[], const char rmstree[], const char savefile[]){
   double dt = 6.0e-9;
   double fv = 1.0;
@@ -1624,6 +1825,259 @@ int Lanalysis::ECoincidenceProton(const char bintree[], const char rmstree[], co
     Cm->Fill();
     h0->Delete();
     Tdata->Delete();
+  }
+  fs->Write();
+  return 0;
+}
+
+int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], const char acctree[], const char savefile[]){
+  TFile * fb = new TFile(bintree, "r");
+  TTree * Tp = (TTree *) fb->Get("binplus");
+  double Nbinp = Tp->GetEntries();
+  TTree * Tm = (TTree *) fb->Get("binminus");
+  double Nbinm = Tm->GetEntries();
+  double BinNumber;
+  double A1, A2, A3;
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("A1", &A1);
+  Tp->SetBranchAddress("A2", &A2);
+  Tp->SetBranchAddress("A3", &A3);
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("A1", &A1);
+  Tp->SetBranchAddress("A2", &A2);
+  Tp->SetBranchAddress("A3", &A3);
+  TFile * fr = new TFile(rmstree, "r");
+  TTree * Rp = (TTree *) fr->Get("rmsplus");
+  TTree * Rm = (TTree *) fr->Get("rmsminus");
+  double dphih, dphiS;
+  Rp->SetBranchAddress("dphih", &dphih);
+  Rp->SetBranchAddress("dphiS", &dphiS);
+  Rm->SetBranchAddress("dphih", &dphih);
+  Rm->SetBranchAddress("dphiS", &dphiS);
+  TFile * fa = new TFile(acctree, "r");
+  TTree * Ap = (TTree *) fa->Get("accplus");
+  TTree * Am = (TTree *) fa->Get("accminus");
+  double ha, hb;
+  double cc[6];
+  Ap->SetBranchAddress("ha", &ha);
+  Ap->SetBranchAddress("hb", &hb);
+  Ap->SetBranchAddress("c0", &cc[0]);
+  Ap->SetBranchAddress("c1", &cc[1]);
+  Ap->SetBranchAddress("c2", &cc[2]);
+  Ap->SetBranchAddress("c3", &cc[3]);
+  Ap->SetBranchAddress("c4", &cc[4]);
+  Ap->SetBranchAddress("c5", &cc[5]);
+  Am->SetBranchAddress("ha", &ha);
+  Am->SetBranchAddress("hb", &hb);
+  Am->SetBranchAddress("c0", &cc[0]);
+  Am->SetBranchAddress("c1", &cc[1]);
+  Am->SetBranchAddress("c2", &cc[2]);
+  Am->SetBranchAddress("c3", &cc[3]);
+  Am->SetBranchAddress("c4", &cc[4]);
+  Am->SetBranchAddress("c5", &cc[5]);
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Sp = new TTree("Rp", "Rp");
+  Sp->SetDirectory(fs);
+  TTree * Sm = new TTree("Rm", "Rm");
+  Sm->SetDirectory(fs);
+  double Asym[3], ErrRelH[3], ErrRelS[3];
+  Sp->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Sp->Branch("ErrRelH1", &ErrRelH[0], "ErrRelH1/D");
+  Sp->Branch("ErrRelH2", &ErrRelH[1], "ErrRelH2/D");
+  Sp->Branch("ErrRelH3", &ErrRelH[2], "ErrRelH3/D");
+  Sp->Branch("ErrRelS1", &ErrRelS[0], "ErrRelS1/D");
+  Sp->Branch("ErrRelS2", &ErrRelS[1], "ErrRelS2/D");
+  Sp->Branch("ErrRelS3", &ErrRelS[2], "ErrRelS3/D");
+  Sm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Sm->Branch("ErrRelH1", &ErrRelH[0], "ErrRelH1/D");
+  Sm->Branch("ErrRelH2", &ErrRelH[1], "ErrRelH2/D");
+  Sm->Branch("ErrRelH3", &ErrRelH[2], "ErrRelH3/D");
+  Sm->Branch("ErrRelS1", &ErrRelS[0], "ErrRelS1/D");
+  Sm->Branch("ErrRelS2", &ErrRelS[1], "ErrRelS2/D");
+  Sm->Branch("ErrRelS3", &ErrRelS[2], "ErrRelS3/D");
+  TF1 * f1 = new TF1("f1", "[0]*(1.0+[1]*cos(x)+[2]*cos(2.0*x)+[3]*cos(3.0*x)+[4]*cos(4.0*x)+[5]*cos(5.0*x))", -M_PI, M_PI);
+  TF2 * f2 = new TF2("f2", "[0]*sin(x-y)+[1]*sin(x+y)+[2]*sin(3.0*x-y)", -M_PI, M_PI, 0.0, M_PI);
+  double phih, phiS, sum1, sum2;
+  TF1 * rs;
+  std::cout << "Resolution uncertianty pi+:" << std::endl;
+  //for (int nb = 55; nb < 60; nb++){
+  for (int nb = 0; nb < Nbinp; nb++){
+    Tp->GetEntry(nb);
+    Rp->GetEntry(nb);
+    Ap->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinp << std::endl;
+    f1->SetParameters(1.0, cc[1], cc[2], cc[3], cc[4], cc[5]);
+    f2->SetParameters(A1, A2, A3);
+    TH2D * ht1 = new TH2D("ht1", "ht1", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * ht2 = new TH2D("ht2", "ht2", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hh1 = new TH2D("hh1", "hh1", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hh2 = new TH2D("hh2", "hh2", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hs1 = new TH2D("hs1", "hs1", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hs2 = new TH2D("hs2", "hs2", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hh = new TH2D("hh", "hh", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hs = new TH2D("hs", "hs", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    for (int i = 0; i <= 720; i++){
+      for (int j = 1; j <= 360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	phiS = hs->GetYaxis()->GetBinCenter(j);
+	ht1->SetBinContent(i, j, (1.0+f2->Eval(phih, phiS))*f1->Eval(phih));
+	ht2->SetBinContent(i, j, (1.0-f2->Eval(phih, phiS))*f1->Eval(phih));	
+      }
+    }
+    for (int i = 0; i <= 720; i++){
+      for (int j = 1; j <=360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	phiS = hs->GetYaxis()->GetBinCenter(j);
+	sum1 = 0.0;
+	sum2 = 0.0;
+	for (int k = 1; k <= 720; k++){
+	  sum1 = sum1 + ht1->GetBinContent(k, j) * TMath::Gaus(phih, ht1->GetXaxis()->GetBinCenter(k), dphih);
+	  sum2 = sum2 + ht2->GetBinContent(k, j) * TMath::Gaus(phih, ht2->GetXaxis()->GetBinCenter(k), dphih);
+	}
+	hh1->SetBinContent(i, j, sum1);
+	hh2->SetBinContent(i, j, sum2);
+      }
+    }
+    for (int i = 1; i <= 720; i++){
+      for (int j = 1; j <=360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	phiS = hs->GetYaxis()->GetBinCenter(j);
+	sum1 = 0.0;
+	sum2 = 0.0;
+	for (int k = 1; k <= 360; k++){
+	  sum1 = sum1 + ht1->GetBinContent(i, k) * TMath::Gaus(phiS, ht1->GetYaxis()->GetBinCenter(k), dphiS);
+	  sum2 = sum2 + ht2->GetBinContent(i, k) * TMath::Gaus(phiS, ht2->GetYaxis()->GetBinCenter(k), dphiS);
+	}
+	hs1->SetBinContent(i, j, sum1);
+	hs2->SetBinContent(i, j, sum2);
+      }
+    }
+    for (int i = 1; i <= 720; i++){
+      for (int j = 1; j <=360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	hh->SetBinContent(i, j, (hh1->GetBinContent(i,j)-hh2->GetBinContent(i,j))/(hh1->GetBinContent(i,j)+hh2->GetBinContent(i,j)));
+	hs->SetBinContent(i, j, (hs1->GetBinContent(i,j)-hs2->GetBinContent(i,j))/(hs1->GetBinContent(i,j)+hs2->GetBinContent(i,j)));
+      }
+    }
+    hh->Fit("f2","QO", "", ha, hb);
+    rs = hh->GetFunction("f2");
+    Asym[0] = rs->GetParameter(0);
+    Asym[1] = rs->GetParameter(1);
+    Asym[2] = rs->GetParameter(2);
+    ErrRelH[0] = std::abs((A1-Asym[0]) / A1);
+    ErrRelH[1] = std::abs((A2-Asym[1]) / A2);
+    ErrRelH[2] = std::abs((A3-Asym[2]) / A3);
+    hs->Fit("f2","QO", "", ha, hb);
+    rs = hs->GetFunction("f2");
+    Asym[0] = rs->GetParameter(0);
+    Asym[1] = rs->GetParameter(1);
+    Asym[2] = rs->GetParameter(2);
+    ErrRelS[0] = std::abs((A1-Asym[0]) / A1);
+    ErrRelS[1] = std::abs((A2-Asym[1]) / A2);
+    ErrRelS[2] = std::abs((A3-Asym[2]) / A3);
+    Sp->Fill();
+    ht1->Delete();
+    ht2->Delete();
+    hh1->Delete();
+    hh2->Delete();
+    hs1->Delete();
+    hs2->Delete();
+    hh->Delete();
+    hs->Delete();
+  }
+  std::cout << "Resolution uncertianty pi-:" << std::endl;
+  //for (int nb = 55; nb < 60; nb++){
+  for (int nb = 0; nb < Nbinm; nb++){
+    Tm->GetEntry(nb);
+    Rm->GetEntry(nb);
+    Am->GetEntry(nb);
+    std::cout << "#" << nb << " in " << Nbinm << std::endl;
+    f1->SetParameters(1.0, cc[1], cc[2], cc[3], cc[4], cc[5]);
+    f2->SetParameters(A1, A2, A3);
+    TH2D * ht1 = new TH2D("ht1", "ht1", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * ht2 = new TH2D("ht2", "ht2", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hh1 = new TH2D("hh1", "hh1", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hh2 = new TH2D("hh2", "hh2", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hs1 = new TH2D("hs1", "hs1", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hs2 = new TH2D("hs2", "hs2", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hh = new TH2D("hh", "hh", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    TH2D * hs = new TH2D("hs", "hs", 720, -M_PI, M_PI, 360, 0.0, M_PI);
+    for (int i = 0; i <= 720; i++){
+      for (int j = 1; j <= 360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	phiS = hs->GetYaxis()->GetBinCenter(j);
+	ht1->SetBinContent(i, j, (1.0+f2->Eval(phih, phiS))*f1->Eval(phih));
+	ht2->SetBinContent(i, j, (1.0-f2->Eval(phih, phiS))*f1->Eval(phih));	
+      }
+    }
+    for (int i = 0; i <= 720; i++){
+      for (int j = 1; j <=360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	phiS = hs->GetYaxis()->GetBinCenter(j);
+	sum1 = 0.0;
+	sum2 = 0.0;
+	for (int k = 1; k <= 720; k++){
+	  sum1 = sum1 + ht1->GetBinContent(k, j) * TMath::Gaus(phih, ht1->GetXaxis()->GetBinCenter(k), dphih);
+	  sum2 = sum2 + ht2->GetBinContent(k, j) * TMath::Gaus(phih, ht2->GetXaxis()->GetBinCenter(k), dphih);
+	}
+	hh1->SetBinContent(i, j, sum1);
+	hh2->SetBinContent(i, j, sum2);
+      }
+    }
+    for (int i = 1; i <= 720; i++){
+      for (int j = 1; j <=360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	phiS = hs->GetYaxis()->GetBinCenter(j);
+	sum1 = 0.0;
+	sum2 = 0.0;
+	for (int k = 1; k <= 360; k++){
+	  sum1 = sum1 + ht1->GetBinContent(i, k) * TMath::Gaus(phiS, ht1->GetYaxis()->GetBinCenter(k), dphiS);
+	  sum2 = sum2 + ht2->GetBinContent(i, k) * TMath::Gaus(phiS, ht2->GetYaxis()->GetBinCenter(k), dphiS);
+	}
+	hs1->SetBinContent(i, j, sum1);
+	hs2->SetBinContent(i, j, sum2);
+      }
+    }
+    for (int i = 1; i <= 720; i++){
+      for (int j = 1; j <=360; j++){
+	phih = hs->GetXaxis()->GetBinCenter(i);
+	if (std::abs(phih) < ha || std::abs(phih) > hb) continue;
+	hh->SetBinContent(i, j, (hh1->GetBinContent(i,j)-hh2->GetBinContent(i,j))/(hh1->GetBinContent(i,j)+hh2->GetBinContent(i,j)));
+	hs->SetBinContent(i, j, (hs1->GetBinContent(i,j)-hs2->GetBinContent(i,j))/(hs1->GetBinContent(i,j)+hs2->GetBinContent(i,j)));
+      }
+    }
+    hh->Fit("f2","QO", "", ha, hb);
+    rs = hh->GetFunction("f2");
+    Asym[0] = rs->GetParameter(0);
+    Asym[1] = rs->GetParameter(1);
+    Asym[2] = rs->GetParameter(2);
+    ErrRelH[0] = std::abs((A1-Asym[0]) / A1);
+    ErrRelH[1] = std::abs((A2-Asym[1]) / A2);
+    ErrRelH[2] = std::abs((A3-Asym[2]) / A3);
+    hs->Fit("f2","QO", "", ha, hb);
+    rs = hs->GetFunction("f2");
+    Asym[0] = rs->GetParameter(0);
+    Asym[1] = rs->GetParameter(1);
+    Asym[2] = rs->GetParameter(2);
+    ErrRelS[0] = std::abs((A1-Asym[0]) / A1);
+    ErrRelS[1] = std::abs((A2-Asym[1]) / A2);
+    ErrRelS[2] = std::abs((A3-Asym[2]) / A3);
+    Sm->Fill();
+    ht1->Delete();
+    ht2->Delete();
+    hh1->Delete();
+    hh2->Delete();
+    hs1->Delete();
+    hs2->Delete();
+    hh->Delete();
+    hs->Delete();
   }
   fs->Write();
   return 0;
