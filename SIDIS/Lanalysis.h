@@ -129,7 +129,7 @@ int Lanalysis::MakeBinInfoTree(const char bininfo[], const char bintree[], const
 int Lanalysis::FitCos1(TH1D * h0, const double * range, double * cc){
   TF1 * fc = new TF1("fc", "[0]*(1.0+[1]*cos(x)+[2]*cos(2.0*x)+[3]*cos(3.0*x)+[4]*cos(4.0*x)+[5]*cos(5.0*x))", 0.0, M_PI);
   fc->SetParameters(h0->Integral(1, -1), 0.0, 0.0, 0.0, 0.0, 0.0);
-  h0->Fit("fc", "WIQ", "", range[0], range[1]);
+  h0->Fit("fc", "WIQO", "", range[0], range[1]);
   TF1 * rs = h0->GetFunction("fc");
   cc[0] = rs->GetParameter(0);
   cc[1] = rs->GetParameter(1);
@@ -284,7 +284,7 @@ int Lanalysis::BinAnalysisNeutron(const char savefile[]){
   Long64_t Nevent;
   double kin[7], lab[7];
   std::cout << "bin analysis: pi+" << std::endl;
-  //for (int nb = 612; nb < 613; nb++){
+  //for (int nb = 684; nb < 686; nb++){
   for (int nb = 0; nb < Nbinp; nb++){
     Fbinp->GetEntry(nb);
     BinNumber = nb;
@@ -336,7 +336,7 @@ int Lanalysis::BinAnalysisNeutron(const char savefile[]){
     TH1D * hzp = new TH1D("hzp", "hzp", 1, 0.0, M_PI);
     TH1D * hQ2p = new TH1D("hQ2p", "hQ2p", 1, 0.0, M_PI);
     TH1D * hPtp = new TH1D("hPtp", "hPtp", 1, 0.0, M_PI);
-    for (int ie = 0; ie < Nevent; ie++){
+    for (double ie = 0; ie < Nevent; ie = ie + 1){
       Tdata->GetEntry(ie);
       if (kin[4] < Ptl || kin[4] > Ptu) continue;
       if (kin[0] < xl || kin[0] > xu) continue;
@@ -354,7 +354,7 @@ int Lanalysis::BinAnalysisNeutron(const char savefile[]){
     Nsim = hsim->Integral(1, -1);
     Nacc = h0p->Integral(1, -1) * _eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
     std::cout << Nsim << "  " << Nacc << std::endl;
-    if (Nacc > 1.0e+5){
+    if (Nacc > 1.0e+5 && Nsim > 10){
       fn = hnp->Integral(1,-1) / h0p->Integral(1,-1);
       xm = hxp->Integral(1,-1) / h0p->Integral(1,-1);
       ym = hyp->Integral(1,-1) / h0p->Integral(1,-1);
@@ -445,7 +445,7 @@ int Lanalysis::BinAnalysisNeutron(const char savefile[]){
     TH1D * hzm = new TH1D("hzm", "hzm", 1, 0.0, M_PI);
     TH1D * hQ2m = new TH1D("hQ2m", "hQ2m", 1, 0.0, M_PI);
     TH1D * hPtm = new TH1D("hPtm", "hPtm", 1, 0.0, M_PI);
-    for (int ie = 0; ie < Nevent; ie++){
+    for (double ie = 0; ie < Nevent; ie = ie + 1){
       Tdata->GetEntry(ie);
       if (kin[4] < Ptl || kin[4] > Ptu) continue;
       if (kin[0] < xl || kin[0] > xu) continue;
@@ -463,7 +463,7 @@ int Lanalysis::BinAnalysisNeutron(const char savefile[]){
     Nsim = hsim->Integral(1, -1);
     Nacc = h0m->Integral(1, -1) *_eff * _lumi * _days * 24.0 * 3600.0 / _simdensity;
     std::cout << Nsim << "  " << Nacc << std::endl;
-    if (Nacc > 1.0e+5){
+    if (Nacc > 1.0e+5 && Nsim > 10){
       fn = hnm->Integral(1, -1) / h0m->Integral(1, -1);
       xm = hxm->Integral(1, -1) / h0m->Integral(1, -1);
       ym = hym->Integral(1, -1) / h0m->Integral(1, -1);
@@ -913,7 +913,7 @@ int Lanalysis::BinResolutionNeutron(const char bintree[], const char savefile[])
   Long64_t Nevent;
   double kin[7], lab[7];
   std::cout << "bin resolution: pi+" << std::endl;
-  //for (int nb = 612; nb < 613; nb++){
+  //for (int nb = 680; nb < 681; nb++){
   for (int nb = 0; nb < Nbinp; nb++){
     Tp->GetEntry(nb);
     std::cout << "#" << nb << " in " << Nbinp << std::endl;
@@ -1201,7 +1201,7 @@ int Lanalysis::BinAcceptanceNeutron(const char bintree[], const char savefile[])
     Tdata->SetBranchAddress("acc_pion_p", &acc_pion[0]);
     Tdata->SetBranchAddress("acc_pion_m", &acc_pion[1]);
     TH1D * h0 = new TH1D("h0", "h0", 360, 0.0, M_PI);
-    for (int ie = 0; ie < Nevent; ie++){
+    for (double ie = 0; ie < Nevent; ie = ie + 1){
       Tdata->GetEntry(ie);
       if (Pt < Ptl || Pt > Ptu) continue;
       if (x < xl || x > xu) continue;
