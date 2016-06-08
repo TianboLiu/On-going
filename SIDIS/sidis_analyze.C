@@ -176,7 +176,7 @@ int main(int argc, char* argv[]){
   }
 
   /************************************************/
-  if (true){// E resolution N11
+  if (false){// E resolution N11
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
     TString bintree = "Neutron/sidisbin_11.root";
     TString rmstree = "Neutron/sidisrms_11.root";
@@ -188,7 +188,7 @@ int main(int argc, char* argv[]){
     N11.SetSimInfo(lumi, days, ST, 5);
     N11.EResolutionNeutron(bintree, rmstree, acctree, "Neutron/sidisres_11.root");
   }
-  if (true){// E resolution N8
+  if (false){// E resolution N8
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
     TString bintree = "Neutron/sidisbin_8.root";
     TString rmstree = "Neutron/sidisrms_8.root";
@@ -201,6 +201,27 @@ int main(int argc, char* argv[]){
     N8.EResolutionNeutron(bintree, rmstree, acctree, "Neutron/sidisres_8.root");
   }
 
+  /************************************************/
+  if (true){//Nuclear PDF N11
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
+    TString bintree = "Neutron/sidisbin_11.root";
+    Lanalysis N11(datadir);
+    double lumi = 1.0e+10 * pow(0.197327, 2);
+    double days = 48.0;
+    double ST = 0.6;
+    N11.SetSimInfo(lumi, days, ST, 5);
+    N11.ENuclearPDF(bintree, "Neutron/sidisnpdf_11.root");
+  }
+  if (true){//Nuclear PDF N8
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
+    TString bintree = "Neutron/sidisbin_8.root";
+    Lanalysis N8(datadir);
+    double lumi = 1.0e+10 * pow(0.197327, 2);
+    double days = 21.0;
+    double ST = 0.6;
+    N8.SetSimInfo(lumi, days, ST, 5);
+    N8.ENuclearPDF(bintree, "Neutron/sidisnpdf_8.root");
+  }
 
 
 
