@@ -100,7 +100,7 @@ class Lstructure{
   static int sigmaUUTp(const double * lab, double * xs, const double * fpara, const double * Dpara);
   static int sigmaUUTn(const double * lab, double * xs, const double * fpara, const double * Dpara);
   static int sigmaUUT(const double * AZ, const double * lab, double * xs, const double * fpara, const double * Dpara);// lab frame
-  static int sigmaUUTreal(const double * lab, double xs, const char * nuclear, const double * fpara, const double * Dpara);
+  static int sigmaUUTreal(const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
 };
 
 Lstructure::Lstructure(double ts){
