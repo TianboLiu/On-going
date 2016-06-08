@@ -19,10 +19,10 @@ class Lstructure{
   static int f1n(const double * var, double * f1, const char set[]);
   static int f1N(const double * AZ, const double * var, double * f1, const char set[]);
   /* real nuclear PDF */
-  static int f1_n32(const double * var, double * f1);//Helium-3
-  static int f1_n42(const double * var, double * f1);//Helium-4
-  static int f1_n126(const double * var, double * f1);//Carbon-12
-  static int f1_n147(const double * var, double * f1);//Nitrogen-14
+  static int f1_ncteq(const double * var, double * f1, const char nuclear[]);
+  static int f1p_bound(const double * var, double * f1, const char nuclear[]);
+  static int f1n_bound(const double * var, double * f1, const char nuclear[]);
+  static int f1N_bound(const double * AZ, const double * var, double * f1, const char nuclear[]);
   /* helicity */
   static int g1_grsv(const double * var, double * g1);
   static int g1_dssv(const double * var, double * g1);
@@ -72,8 +72,9 @@ class Lstructure{
   static int FUUTp(const double * var, double * FF, const double * fpara, const double * Dpara);
   static int FUUTn(const double * var, double * FF, const double * fpara, const double * Dpara);
   static int FUUTN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
-  static int FUUTNnlo(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
-  static int FUUTNreal(const double * var, double * FF, const char * nuclear, const double * fpara, const double * Dpara);
+  static int FUUTp_bound(const double * var, double * FF, const char * nuclear, const double * fpara, const double * Dpara);
+  static int FUUTn_bound(const double * var, double * FF, const char * nuclear, const double * fpara, const double * Dpara);
+  static int FUUTN_bound(const double * AZ, const double * var, double * FF, const char * nuclear, const double * fpara, const double * Dpara);
   static int FUTsinHmSp(const double * var, double * FF, const double * fpara, const double * Dpara);
   static int FUTsinHmSn(const double * var, double * FF, const double * fpara, const double * Dpara);
   static int FUTsinHmSN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
@@ -102,8 +103,9 @@ class Lstructure{
   static int sigmaUUTp(const double * lab, double * xs, const double * fpara, const double * Dpara);
   static int sigmaUUTn(const double * lab, double * xs, const double * fpara, const double * Dpara);
   static int sigmaUUT(const double * AZ, const double * lab, double * xs, const double * fpara, const double * Dpara);// lab frame
-  static int sigmaUUTnlo(const double * AZ, const double * lab, double * xs, const double * fpara, const double * Dpara);
-  static int sigmaUUTreal(const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
+  static int sigmaUUTp_bound(const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
+  static int sigmaUUTn_bound(const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
+  static int sigmaUUT_bound(const double * AZ, const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
 };
 
 Lstructure::Lstructure(double ts){
@@ -122,21 +124,6 @@ int Lstructure::f1_ct14(const double * var, double * f1){
   f1[3] = _pdfs->xfxQ2(-2, x, Q2) / x;//ubar
   f1[4] = _pdfs->xfxQ2(-1, x, Q2) / x;//dbar
   f1[5] = _pdfs->xfxQ2(-3, x, Q2) / x;//sbar
-  return 0;
-}
-
-const LHAPDF::PDF * _pdfsnlo = LHAPDF::mkPDF("CT14nlo", 0);
-int Lstructure::f1_ct14nlo(const double * var, double * f1){
-  //var: x, Q2
-  double x = var[0];
-  double Q2 = var[1];
-  //f1: u, d, s, ubar, dbar, sbar
-  f1[0] = _pdfsnlo->xfxQ2(2, x, Q2) / x;//u
-  f1[1] = _pdfsnlo->xfxQ2(1, x, Q2) / x;//d
-  f1[2] = _pdfsnlo->xfxQ2(3, x, Q2) / x;//s
-  f1[3] = _pdfsnlo->xfxQ2(-2, x, Q2) / x;//ubar
-  f1[4] = _pdfsnlo->xfxQ2(-1, x, Q2) / x;//dbar
-  f1[5] = _pdfsnlo->xfxQ2(-3, x, Q2) / x;//sbar
   return 0;
 }
 
@@ -199,63 +186,89 @@ int Lstructure::f1N(const double * AZ, const double * var, double * f1, const ch
   return 0;
 }
 
-const LHAPDF::PDF * _npdfs_3_2 = LHAPDF::mkPDF("nCTEQ15FullNuc_3_2", 0);
-int Lstructure::f1_n32(const double * var, double * f1){
+const LHAPDF::PDF * _npdfs_1_1 = LHAPDF::mkPDF("nCTEQ15_1_1", 0);
+const LHAPDF::PDF * _npdfs_3_2 = LHAPDF::mkPDF("nCTEQ15_3_2", 0);
+const LHAPDF::PDF * _npdfs_4_2 = LHAPDF::mkPDF("nCTEQ15_4_2", 0);
+const LHAPDF::PDF * _npdfs_12_6 = LHAPDF::mkPDF("nCTEQ15_12_6", 0);
+const LHAPDF::PDF * _npdfs_14_7 = LHAPDF::mkPDF("nCTEQ15_14_7", 0);
+int Lstructure::f1_ncteq(const double * var, double * f1, const char nuclear[] = "hydrogen-1"){
   //var: x, Q2
   double x = var[0];
   double Q2 = var[1];
   //f1: u, d, s, ubar, dbar, sbar
-  f1[0] = _npdfs_3_2->xfxQ2(2, x, Q2) / x * 3.0;//u
-  f1[1] = _npdfs_3_2->xfxQ2(1, x, Q2) / x * 3.0;//d
-  f1[2] = _npdfs_3_2->xfxQ2(3, x, Q2) / x * 3.0;//s
-  f1[3] = _npdfs_3_2->xfxQ2(-2, x, Q2) / x * 3.0;//ubar
-  f1[4] = _npdfs_3_2->xfxQ2(-1, x, Q2) / x * 3.0;//dbar
-  f1[5] = _npdfs_3_2->xfxQ2(-3, x, Q2) / x * 3.0;//sbar
+  if (strcmp(nuclear, "hydrogen-1") == 0){
+    f1[0] = _npdfs_1_1->xfxQ2(2, x, Q2) / x;//u
+    f1[1] = _npdfs_1_1->xfxQ2(1, x, Q2) / x;//d
+    f1[2] = _npdfs_1_1->xfxQ2(3, x, Q2) / x;//s
+    f1[3] = _npdfs_1_1->xfxQ2(-2, x, Q2) / x;//ubar
+    f1[4] = _npdfs_1_1->xfxQ2(-1, x, Q2) / x;//dbar
+    f1[5] = _npdfs_1_1->xfxQ2(-3, x, Q2) / x;//sbar
+  }
+  else if (strcmp(nuclear, "helium-3") == 0){
+    f1[0] = _npdfs_3_2->xfxQ2(2, x, Q2) / x;//u
+    f1[1] = _npdfs_3_2->xfxQ2(1, x, Q2) / x;//d
+    f1[2] = _npdfs_3_2->xfxQ2(3, x, Q2) / x;//s
+    f1[3] = _npdfs_3_2->xfxQ2(-2, x, Q2) / x;//ubar
+    f1[4] = _npdfs_3_2->xfxQ2(-1, x, Q2) / x;//dbar
+    f1[5] = _npdfs_3_2->xfxQ2(-3, x, Q2) / x;//sbar
+  }
+  else if (strcmp(nuclear, "helium-4") == 0){
+    f1[0] = _npdfs_4_2->xfxQ2(2, x, Q2) / x;//u
+    f1[1] = _npdfs_4_2->xfxQ2(1, x, Q2) / x;//d
+    f1[2] = _npdfs_4_2->xfxQ2(3, x, Q2) / x;//s
+    f1[3] = _npdfs_4_2->xfxQ2(-2, x, Q2) / x;//ubar
+    f1[4] = _npdfs_4_2->xfxQ2(-1, x, Q2) / x;//dbar
+    f1[5] = _npdfs_4_2->xfxQ2(-3, x, Q2) / x;//sbar
+  }
+  else if (strcmp(nuclear, "carbon-12") == 0){
+    f1[0] = _npdfs_12_6->xfxQ2(2, x, Q2) / x;//u
+    f1[1] = _npdfs_12_6->xfxQ2(1, x, Q2) / x;//d
+    f1[2] = _npdfs_12_6->xfxQ2(3, x, Q2) / x;//s
+    f1[3] = _npdfs_12_6->xfxQ2(-2, x, Q2) / x;//ubar
+    f1[4] = _npdfs_12_6->xfxQ2(-1, x, Q2) / x;//dbar
+    f1[5] = _npdfs_12_6->xfxQ2(-3, x, Q2) / x;//sbar
+  }
+  else if (strcmp(nuclear, "nitrogen-14") == 0){
+    f1[0] = _npdfs_14_7->xfxQ2(2, x, Q2) / x;//u
+    f1[1] = _npdfs_14_7->xfxQ2(1, x, Q2) / x;//d
+    f1[2] = _npdfs_14_7->xfxQ2(3, x, Q2) / x;//s
+    f1[3] = _npdfs_14_7->xfxQ2(-2, x, Q2) / x;//ubar
+    f1[4] = _npdfs_14_7->xfxQ2(-1, x, Q2) / x;//dbar
+    f1[5] = _npdfs_14_7->xfxQ2(-3, x, Q2) / x;//sbar
+  }
+  else {
+    std::cout << "Error in Lstructure::f1_ncteq: unmatched nuclear!" << std::endl;
+    return 1;
+  }
   return 0;
 }
 
-const LHAPDF::PDF * _npdfs_4_2 = LHAPDF::mkPDF("nCTEQ15FullNuc_4_2", 0);
-int Lstructure::f1_n42(const double * var, double * f1){
-  //var: x, Q2
-  double x = var[0];
-  double Q2 = var[1];
-  //f1: u, d, s, ubar, dbar, sbar
-  f1[0] = _npdfs_3_2->xfxQ2(2, x, Q2) / x * 4.0;//u
-  f1[1] = _npdfs_3_2->xfxQ2(1, x, Q2) / x * 4.0;//d
-  f1[2] = _npdfs_3_2->xfxQ2(3, x, Q2) / x * 4.0;//s
-  f1[3] = _npdfs_3_2->xfxQ2(-2, x, Q2) / x * 4.0;//ubar
-  f1[4] = _npdfs_3_2->xfxQ2(-1, x, Q2) / x * 4.0;//dbar
-  f1[5] = _npdfs_3_2->xfxQ2(-3, x, Q2) / x * 4.0;//sbar
+int Lstructure::f1p_bound(const double * var, double * f1, const char nuclear[] = "hydrogen-1"){
+  f1_ncteq(var, f1, nuclear);
   return 0;
 }
 
-const LHAPDF::PDF * _npdfs_12_6 = LHAPDF::mkPDF("nCTEQ15FullNuc_12_6", 0);
-int Lstructure::f1_n126(const double * var, double * f1){
-  //var: x, Q2
-  double x = var[0];
-  double Q2 = var[1];
-  //f1: u, d, s, ubar, dbar, sbar
-  f1[0] = _npdfs_12_6->xfxQ2(2, x, Q2) / x * 12.0;//u
-  f1[1] = _npdfs_12_6->xfxQ2(1, x, Q2) / x * 12.0;//d
-  f1[2] = _npdfs_12_6->xfxQ2(3, x, Q2) / x * 12.0;//s
-  f1[3] = _npdfs_12_6->xfxQ2(-2, x, Q2) / x * 12.0;//ubar
-  f1[4] = _npdfs_12_6->xfxQ2(-1, x, Q2) / x * 12.0;//dbar
-  f1[5] = _npdfs_12_6->xfxQ2(-3, x, Q2) / x * 12.0;//sbar
+int Lstructure::f1n_bound(const double * var, double * f1, const char nuclear[] = "hydrogen-1"){
+  double pf1[6];
+  f1_ncteq(var, pf1, nuclear);
+  f1[0] = pf1[1];
+  f1[1] = pf1[0];
+  f1[2] = pf1[2];
+  f1[3] = pf1[4];
+  f1[4] = pf1[3];
+  f1[5] = pf1[5];
   return 0;
 }
 
-const LHAPDF::PDF * _npdfs_14_7 = LHAPDF::mkPDF("nCTEQ15FullNuc_14_7", 0);
-int Lstructure::f1_n147(const double * var, double * f1){
-  //var: x, Q2
-  double x = var[0];
-  double Q2 = var[1];
-  //f1: u, d, s, ubar, dbar, sbar
-  f1[0] = _npdfs_14_7->xfxQ2(2, x, Q2) / x * 14.0;//u
-  f1[1] = _npdfs_14_7->xfxQ2(1, x, Q2) / x * 14.0;//d
-  f1[2] = _npdfs_14_7->xfxQ2(3, x, Q2) / x * 14.0;//s
-  f1[3] = _npdfs_14_7->xfxQ2(-2, x, Q2) / x * 14.0;//ubar
-  f1[4] = _npdfs_14_7->xfxQ2(-1, x, Q2) / x * 14.0;//dbar
-  f1[5] = _npdfs_14_7->xfxQ2(-3, x, Q2) / x * 14.0;//sbar
+int Lstructure::f1N_bound(const double * AZ, const double * var, double * f1, const char nuclear[] = "hydrogen-1"){
+  double Np = AZ[0];
+  double Nn = AZ[1];
+  double fp[6], fn[6];
+  f1p_bound(var, fp, nuclear);
+  f1n_bound(var, fn, nuclear);
+  for (int i = 0; i < 6; i++){
+    f1[i] = Np * fp[i] + Nn * fn[i];
+  }
   return 0;
 }
 
@@ -951,39 +964,7 @@ int Lstructure::FUUTN(const double * AZ, const double * var, double * FF, const 
   return 0;
 }
 
-int Lstructure::FUUTNnlo(const double * AZ, const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0){
-  //AZ: Np, Nn
-  double Np = AZ[0];
-  double Nn = AZ[1];
-  //var: x, Q2, z, Pt
-  double x = var[0];
-  double Q2 = var[1];
-  double z = var[2];
-  double Pt = var[3];
-  double kt2, pt2;
-  if (fpara == 0) kt2 = 0.25;
-  else kt2 = fpara[0];
-  if (Dpara == 0) pt2 = 0.20;
-  else pt2 = Dpara[0];
-  double Pt2 = pt2 + z*z*kt2;
-  double f1p[6], f1[6], D1[6];
-  double f1var[2] = {x, Q2};
-  double D1var[2] = {z, Q2};
-  f1_ct14nlo(f1var, f1p);
-  f1[0] = Np * f1p[0] + Nn * f1p[1];
-  f1[1] = Np * f1p[1] + Nn * f1p[0];
-  f1[2] = (Np + Nn) * f1p[2];
-  f1[3] = Np * f1p[3] + Nn * f1p[4];
-  f1[4] = Np * f1p[4] + Nn * f1p[3];
-  f1[5] = (Np + Nn) * f1p[5];
-  D1pip(D1var, D1);
-  FF[0] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
-  D1pim(D1var, D1);
-  FF[1] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
-  return 0;
-}
-  
-int Lstructure::FUUTNreal(const double * var, double * FF, const char * nuclear, const double * fpara = 0, const double * Dpara = 0){
+int Lstructure::FUUTp_bound(const double * var, double * FF, const char * nuclear = "hydrogen-1", const double * fpara = 0, const double * Dpara = 0){
   //var: x, Q2, z, Pt
   double x = var[0];
   double Q2 = var[1];
@@ -998,25 +979,48 @@ int Lstructure::FUUTNreal(const double * var, double * FF, const char * nuclear,
   double f1[6], D1[6];
   double f1var[2] = {x, Q2};
   double D1var[2] = {z, Q2};
-  if (strcmp(nuclear, "helium-3") == 0)
-    f1_n32(f1var, f1);
-  else if (strcmp(nuclear, "helium-4") == 0)
-    f1_n42(f1var, f1);
-  else if (strcmp(nuclear, "carbon-12") == 0)
-    f1_n126(f1var, f1);
-  else if (strcmp(nuclear, "nitrogen-14") == 0)
-    f1_n147(f1var, f1);
-  else {
-    std::cout << "Error in Lstructure::FUUTNreal: Invalid nuclear option!" << std::endl;
-    return 1;
-  }
+  f1p_bound(f1var, f1, nuclear);
   D1pip(D1var, D1);
   FF[0] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
   D1pim(D1var, D1);
   FF[1] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
   return 0;
 }
-  
+
+int Lstructure::FUUTn_bound(const double * var, double * FF, const char * nuclear = "hydrogen-1", const double * fpara = 0, const double * Dpara = 0){
+  //var: x, Q2, z, Pt
+  double x = var[0];
+  double Q2 = var[1];
+  double z = var[2];
+  double Pt = var[3];
+  double kt2, pt2;
+  if (fpara == 0) kt2 = 0.25;
+  else kt2 = fpara[0];
+  if (Dpara == 0) pt2 = 0.20;
+  else pt2 = Dpara[0];
+  double Pt2 = pt2 + z*z*kt2;
+  double f1[6], D1[6];
+  double f1var[2] = {x, Q2};
+  double D1var[2] = {z, Q2};
+  f1n_bound(f1var, f1, nuclear);
+  D1pip(D1var, D1);
+  FF[0] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi+
+  D1pim(D1var, D1);
+  FF[1] = x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/Pt2) / (M_PI * Pt2);//pi-
+  return 0;
+}
+
+int Lstructure::FUUTN_bound(const double * AZ, const double * var, double * FF, const char * nuclear = "hydrogen-1", const double * fpara = 0, const double * Dpara = 0){
+  //AZ: Np, Nn
+  double Np = AZ[0];
+  double Nn = AZ[1];
+  double FFp[2], FFn[2];
+  FUUTp_bound(var, FFp, nuclear, fpara, Dpara);
+  FUUTn_bound(var, FFn, nuclear, fpara, Dpara);
+  FF[0] = Np * FFp[0] + Nn * FFn[0];
+  FF[1] = Np * FFp[1] + Nn * FFn[1];
+  return 0;
+}
 
 int Lstructure::FUTsinHmSp(const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0){
   //var: x, Q2, z, Pt
@@ -1552,12 +1556,12 @@ int Lstructure::sigmaUUT(const double * AZ, const double * lab, double * xs, con
   return 0;
 }
 
-int Lstructure::sigmaUUTnlo(const double * AZ, const double * lab, double * xs, const double * fpara = 0, const double * Dpara = 0){
+int Lstructure::sigmaUUTp_bound(const double * lab, double * xs, const char * nuclear = "hydrogen-1", const double * fpara = 0, const double * Dpara = 0){
   double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
   CalcVariables(lab, phys);
   double var[4] = {phys[0], phys[3], phys[2], phys[4]};
   double FF[2];
-  FUUTNnlo(AZ, var, FF, fpara, Dpara);
+  FUUTp_bound(var, FF, nuclear, fpara, Dpara);
   double pre = xsprefactor(phys);
   double jac = Jacobian(lab);
   xs[0] = jac * pre * FF[0];//pi+
@@ -1565,12 +1569,25 @@ int Lstructure::sigmaUUTnlo(const double * AZ, const double * lab, double * xs, 
   return 0;
 }
 
-int Lstructure::sigmaUUTreal(const double * lab, double * xs, const char * nuclear, const double * fpara = 0, const double * Dpara = 0){
+int Lstructure::sigmaUUTn_bound(const double * lab, double * xs, const char * nuclear = "hydrogen-1", const double * fpara = 0, const double * Dpara = 0){
   double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
   CalcVariables(lab, phys);
   double var[4] = {phys[0], phys[3], phys[2], phys[4]};
   double FF[2];
-  FUUTNreal(var, FF, nuclear, fpara, Dpara);
+  FUUTn_bound(var, FF, nuclear, fpara, Dpara);
+  double pre = xsprefactor(phys);
+  double jac = Jacobian(lab);
+  xs[0] = jac * pre * FF[0];//pi+
+  xs[1] = jac * pre * FF[1];//pi-
+  return 0;
+}
+
+int Lstructure::sigmaUUT_bound(const double * AZ, const double * lab, double * xs, const char * nuclear = "hydrogen-1", const double * fpara = 0, const double * Dpara = 0){
+  double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
+  CalcVariables(lab, phys);
+  double var[4] = {phys[0], phys[3], phys[2], phys[4]};
+  double FF[2];
+  FUUTN_bound(AZ, var, FF, nuclear, fpara, Dpara);
   double pre = xsprefactor(phys);
   double jac = Jacobian(lab);
   xs[0] = jac * pre * FF[0];//pi+
