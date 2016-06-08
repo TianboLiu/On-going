@@ -2115,16 +2115,16 @@ int Lanalysis::ENuclearPDF(const char bintree[], const char savefile[]){
   TTree * Nm = new TTree("npdfminus", "npdfminus");
   Nm->SetDirectory(fs);
   double Nacc, Nfree, Nreal, ErrRel;
-  Cp->Branch("BinNumber", &BinNumber, "BinNumber/D");
-  Cp->Branch("Nacc", &Nacc, "Nacc/D");
-  Cp->Branch("Nfree", &Nfree, "Nfree/D");
-  Cp->Branch("Nreal", &Nreal, "Nreal/D");
-  Cp->Branch("ErrRel", &ErrRel, "ErrRel/D");
-  Cm->Branch("BinNumber", &BinNumber, "BinNumber/D");
-  Cm->Branch("Nacc", &Nacc, "Nacc/D");
-  Cm->Branch("Nfree", &Nfree, "Nfree/D");
-  Cm->Branch("Nreal", &Nreal, "Nreal/D");
-  Cm->Branch("ErrRel", &ErrRel, "ErrRel/D");
+  Np->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Np->Branch("Nacc", &Nacc, "Nacc/D");
+  Np->Branch("Nfree", &Nfree, "Nfree/D");
+  Np->Branch("Nreal", &Nreal, "Nreal/D");
+  Np->Branch("ErrRel", &ErrRel, "ErrRel/D");
+  Nm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Nm->Branch("Nacc", &Nacc, "Nacc/D");
+  Nm->Branch("Nfree", &Nfree, "Nfree/D");
+  Nm->Branch("Nreal", &Nreal, "Nreal/D");
+  Nm->Branch("ErrRel", &ErrRel, "ErrRel/D");
   double acc_ele, acc_pion[2];
   double sigma[2];
   double AZ[4] = {2, 1, -0.028, 0.86};//total
