@@ -2114,7 +2114,7 @@ int Lanalysis::ENuclearPDF(const char bintree[], const char savefile[]){
   Np->SetDirectory(fs);
   TTree * Nm = new TTree("npdfminus", "npdfminus");
   Nm->SetDirectory(fs);
-  double Nacc, Nfree, Nreal, ErrRel;
+  double Nfree, Nreal, ErrRel;
   Np->Branch("BinNumber", &BinNumber, "BinNumber/D");
   Np->Branch("Nacc", &Nacc, "Nacc/D");
   Np->Branch("Nfree", &Nfree, "Nfree/D");
