@@ -20,6 +20,7 @@
 #include "TH2D.h"
 #include "TMath.h"
 #include "TMatrixD.h"
+#include "TMatrixDEigen.h"
 #include "TEventList.h"
 
 #include "wiser.h"
