@@ -144,7 +144,7 @@ int main(int argc, char* argv[]){
     N11.SetSimInfo(lumi, days, ST, 5);
     N11.BinAcceptanceNeutron(bintree, "Neutron/sidisacc_11.root");
   }
-  if (false){// Random coincidence N8
+  if (false){// Bin Acceptance N8
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
     TString bintree = "Neutron/sidisbin_8.root";
     Lanalysis N8(datadir);
@@ -164,7 +164,7 @@ int main(int argc, char* argv[]){
     P11.SetSimInfo(lumi, days, ST, 5);
     P11.BinAcceptanceProton(bintree, "Proton/sidisacc_11.root");
   }
-  if (false){// Random coincidence P8
+  if (false){// Bin Acceptance P8
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526P8";
     TString bintree = "Proton/sidisbin_8.root";
     Lanalysis P8(datadir);
@@ -202,7 +202,7 @@ int main(int argc, char* argv[]){
   }
 
   /************************************************/
-  if (true){//Nuclear PDF N11
+  if (false){//Nuclear PDF N11
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
     TString bintree = "Neutron/sidisbin_11.root";
     Lanalysis N11(datadir);
@@ -212,7 +212,7 @@ int main(int argc, char* argv[]){
     N11.SetSimInfo(lumi, days, ST, 5);
     N11.ENuclearPDF(bintree, "Neutron/sidisnpdf_11.root");
   }
-  if (true){//Nuclear PDF N8
+  if (false){//Nuclear PDF N8
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
     TString bintree = "Neutron/sidisbin_8.root";
     Lanalysis N8(datadir);
