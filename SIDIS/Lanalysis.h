@@ -67,7 +67,17 @@ class Lanalysis{
   int ECoincidenceNeutron(const char bintree[], const char rmstree[], const char savefile[]);
   int ECoincidenceProton(const char bintree[], const char rmstree[], const char savefile[]);
   int EResolutionNeutron(const char bintree[], const char rmstree[], const char acctree[], const char savefile[]);
+  int EResolutionProton(const char bintree[], const char rmstree[], const char acctree[], const char savefile[]);
   int ENuclearPDF(const char bintree[], const char savefile[]);
+  int ENuclearNeutron(const char bintree[], const char savefile[]);
+  int EDilutionNeutron(const char bintree[], const char savefile[]);
+  int EDilutionProton(const char bintree[], const char savefile[]);
+  int ERadiativeNeutron(const char bintree[], const char savefile[]);
+  int ERadiativeProton(const char bintree[], const char savefile[]);
+  int EExclusiveNeutron(const char bintree[], const char savefile[]);
+  int EExclusiveProton(const char bintree[], const char savefile[]);
+  int EDiffractiveNeutron(const char bintree[], const char savefile[]);
+  int EDiffractiveProton(const char bintree[], const char savefile[]);
   int ThreetermMatrix(const double * hr, double * M3inv);
   double Threeterm1(const double * coef, const double * phih);
   double Threeterm2(const double * coef, const double * phi);
