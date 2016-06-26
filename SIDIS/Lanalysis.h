@@ -78,6 +78,8 @@ class Lanalysis{
   int EExclusiveProton(const char bintree[], const char savefile[]);
   int EDiffractiveNeutron(const char bintree[], const char savefile[]);
   int EDiffractiveProton(const char bintree[], const char savefile[]);
+  int ETotalNeutron(const char dir[], const char savefile[]);
+  int ETotalProton(const char dir[], const char savefile[]);
   int ThreetermMatrix(const double * hr, double * M3inv);
   double Threeterm1(const double * coef, const double * phih);
   double Threeterm2(const double * coef, const double * phi);
