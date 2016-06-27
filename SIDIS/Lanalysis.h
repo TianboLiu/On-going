@@ -2324,6 +2324,83 @@ int Lanalysis::ENuclearPDF(const char bintree[], const char savefile[]){
   return 0;
 }
 
+int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
+  double BinNumber;
+  double At[3], Ap[3], An[3];
+  double fn, Nacc;
+  double ftime = _days;
+  TFile * fb = new TFile(bintree, "r");
+  TTree * Tp = (TTree *) fb->Get("binplus");
+  double Nbinp = Tp->GetEntries();
+  TTree * Tm = (TTree *) fb->Get("binminus");
+  double Nbinm = Tm->GetEntries();
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("A1", &At[0]);
+  Tp->SetBranchAddress("A2", &At[1]);
+  Tp->SetBranchAddress("A3", &At[2]);
+  Tp->SetBranchAddress("A1p", &Ap[0]);
+  Tp->SetBranchAddress("A2p", &Ap[1]);
+  Tp->SetBranchAddress("A3p", &Ap[2]);
+  Tp->SetBranchAddress("A1n", &An[0]);
+  Tp->SetBranchAddress("A2n", &An[1]);
+  Tp->SetBranchAddress("A3n", &An[2]);
+  Tp->SetBranchAddress("fn", &fn);
+  Tp->SetBranchAddress("Nacc", &Nacc);
+  Tm->SetBranchAddress("BinNumber", &BinNumber);
+  Tm->SetBranchAddress("A1", &At[0]);
+  Tm->SetBranchAddress("A2", &At[1]);
+  Tm->SetBranchAddress("A3", &At[2]);
+  Tm->SetBranchAddress("A1p", &Ap[0]);
+  Tm->SetBranchAddress("A2p", &Ap[1]);
+  Tm->SetBranchAddress("A3p", &Ap[2]);
+  Tm->SetBranchAddress("A1n", &An[0]);
+  Tm->SetBranchAddress("A2n", &An[1]);
+  Tm->SetBranchAddress("A3n", &An[2]);
+  Tm->SetBranchAddress("fn", &fn);
+  Tm->SetBranchAddress("Nacc", &Nacc);
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Np = new TTree("nuclplus", "nuclplus");
+  Np->SetDirectory(fs);
+  TTree * Nm = new TTree("nuclminus", "nuclminus");
+  Nm->SetDirectory(fs);
+  double ErrRel[3];
+  double dfn, dpp, dpn;
+  Np->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Np->Branch("ErrRel1", &ErrRel[0], "ErrRel1/D");
+  Np->Branch("ErrRel2", &ErrRel[1], "ErrRel2/D");
+  Np->Branch("ErrRel3", &ErrRel[2], "ErrRel3/D");
+  Nm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Nm->Branch("ErrRel1", &ErrRel[0], "ErrRel1/D");
+  Nm->Branch("ErrRel2", &ErrRel[1], "ErrRel2/D");
+  Nm->Branch("ErrRel3", &ErrRel[2], "ErrRel3/D");
+  std::cout << "Nuclear effect: pi+" << std::endl;
+  for (int i = 0; i < Nbinp; i++){
+    Tp->GetEntry(i);
+    std::cout << "#" << i << " in " << Nbinp << std::endl;
+    dfn = sqrt((1.0 - fn) * Nacc * ftime) / Nacc / fn;
+    dpn = 0.036 / 0.86;
+    for (int j = 0; j < 3; j++){
+      dpp = sqrt(1.0/((1.0 - fn) * Nacc * ftime) + pow(0.0065/0.028,2) + 0.01) * ((1.0 - fn) * 0.028 * Ap[j]) / (An[j]);
+      ErrRel[j] = sqrt(dfn*dfn + dpn*dpn + dpp*dpp);
+    }
+    Np->Fill();
+  }
+  std::cout << "Nuclear effect: pi-" << std::endl;
+  for (int i = 0; i < Nbinm; i++){
+    Tm->GetEntry(i);
+    std::cout << "#" << i << " in " << Nbinm << std::endl;
+    dfn = sqrt((1.0 - fn) * Nacc * ftime) / Nacc / fn;
+    dpn = 0.036 / 0.86;
+    for (int j = 0; j < 3; j++){
+      dpp = sqrt(1.0/((1.0 - fn) * Nacc * ftime) + pow(0.0065/0.028, 2) + 0.01) * ((1.0 - fn) * 0.028 * Ap[j]) / (An[j]);
+      ErrRel[j] = sqrt(dfn*dfn + dpn*dpn + dpp*dpp);
+    }
+    Nm->Fill();
+  }
+  fs->Write();
+  return 0;
+}
+
 int Lanalysis::ThreetermMatrix(const double * hr, double * M3inv){
   double a = hr[0];
   double b = hr[1];
@@ -2672,6 +2749,7 @@ int Lanalysis::RandomCoincidenceSigmaN(const double * AZ, const double * lab, do
 }
 
 
+  
 
 
 #endif
