@@ -64,6 +64,7 @@ class Lstructure{
   static int DISF2p(const double * var, double * FF);
   static int DISF2n(const double * var, double * FF);
   static int DISF2N(const double * AZ, const double * var, double * FF);
+  static int DISF2N_bound(const double * AZ, const double * var, double * FF, const char * nuclear);
   /* Inclusive cross section */
   static int sigmaDISp(const double * lab, double * xs);
   static int sigmaDISn(const double * lab, double * xs);
@@ -855,8 +856,15 @@ int Lstructure::DISF2N(const double * AZ, const double * var, double * FF){
   f1N(AZ, var, f1, "ct14");
   FF[0] = pow(2.0/3.0, 2) * var[0] * (f1[0] + f1[3]) + pow(1.0/3.0, 2) * var[0] * (f1[1] + f1[2] + f1[4] + f1[5]);
   return 0;
-} 
+}
 
+int Lstructure::DISF2N_bound(const double * AZ, const double * var, double * FF, const char * nuclear){
+  double f1[6];
+  f1N_bound(AZ, var, f1, nuclear);
+  FF[0] = pow(2.0/3.0, 2) * var[0] * (f1[0] + f1[3]) + pow(1.0/3.0, 2) * var[0] * (f1[1] + f1[2] + f1[4] + f1[5]);
+  return 0;
+}
+  
 int Lstructure::sigmaDISp(const double * lab, double * xs){
   //lab: E, p, theta
   //xs: d sigma/ dp dOmega in unit GeV^-2 / GeV.str

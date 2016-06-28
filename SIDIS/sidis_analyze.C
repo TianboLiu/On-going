@@ -245,7 +245,28 @@ int main(int argc, char* argv[]){
     N8.ENuclearNeutron(bintree, "Neutron/sidisnucl_8.root");
   }
   /************************************************/
-  if (true){//Total Neutron
+  if (true){//Dilution factor P11
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526P11";
+    TString bintree = "Proton/sidisbin_11.root";
+    Lanalysis P11(datadir);
+    double lumi = 1.0e+9 * pow(0.197327, 2);
+    double days = 55.0;
+    double ST = 0.7;
+    P11.SetSimInfo(lumi, days, ST, 5);
+    P11.EDilutionProton(bintree, "Proton/sidisdilu_11.root");
+  }
+  if (true){//Dilution factor P11
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526P8";
+    TString bintree = "Proton/sidisbin_8.root";
+    Lanalysis P8(datadir);
+    double lumi = 1.0e+9 * pow(0.197327, 2);
+    double days = 27.5;
+    double ST = 0.7;
+    P8.SetSimInfo(lumi, days, ST, 5);
+    P8.EDilutionProton(bintree, "Proton/sidisdilu_8.root");
+  }
+  /************************************************/
+  if (false){//Total Neutron
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
     TString bintree = "Neutron/sidisbin_11.root";
     Lanalysis Neu(datadir);

@@ -2401,6 +2401,113 @@ int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
   return 0;
 }
 
+int Lanalysis::EDilutionProton(const char bintree[], const char savefile[]){
+  TFile * fb = new TFile(bintree, "r");
+  TTree * Tp = (TTree *) fb->Get("binplus");
+  double Nbinp = Tp->GetEntries();
+  TTree * Tm = (TTree *) fb->Get("binminus");
+  double Nbinm = Tp->GetEntries();
+  double BinNumber;
+  double var[4];
+  double fp, fNH3, Nacc;
+  Tp->SetBranchAddress("BinNumber", &BinNumber);
+  Tp->SetBranchAddress("xm", &var[0]);
+  Tp->SetBranchAddress("Q2m", &var[1]);
+  Tp->SetBranchAddress("zm", &var[2]);
+  Tp->SetBranchAddress("Ptm", &var[3]);
+  Tp->SetBranchAddress("fp", &fp);
+  Tp->SetBranchAddress("fNH3", &fNH3);
+  Tp->SetBranchAddress("Nacc", &Nacc);
+  Tm->SetBranchAddress("BinNumber", &BinNumber);
+  Tm->SetBranchAddress("xm", &var[0]);
+  Tm->SetBranchAddress("Q2m", &var[1]);
+  Tm->SetBranchAddress("zm", &var[2]);
+  Tm->SetBranchAddress("Ptm", &var[3]);
+  Tm->SetBranchAddress("fp", &fp);
+  Tm->SetBranchAddress("fNH3", &fNH3);
+  Tm->SetBranchAddress("Nacc", &Nacc);
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Dp = new TTree("diluplus", "diluplus");
+  Dp->SetDirectory(fs);
+  TTree * Dm = new TTree("diluminus", "diluminus");
+  Dm->SetDirectory(fs);
+  double Ytotal, Yempty, Ydummy, YN, pf;
+  double RNH3He4;
+  double ENH3He4, ENC;
+  double ErrRelpf, ErrRel;
+  Dp->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Dp->Branch("Ytotal", &Ytotal, "Ytotal/D");
+  Dp->Branch("Yempty", &Yempty, "Yempty/D");
+  Dp->Branch("Ydummy", &Ydummy, "Ydummy/D");
+  Dp->Branch("RNH3He4", &RNH3He4, "RNH3He4/D");
+  Dp->Branch("ENH3He4", &ENH3He4, "ENH3He4/D");
+  Dp->Branch("ENC", &ENC, "ENC/D");
+  Dp->Branch("ErrRelpf", &ErrRelpf, "ErrRelpf/D");
+  Dp->Branch("ErrRel", &ErrRel, "ErrRel/D");
+  Dm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Dm->Branch("Ytotal", &Ytotal, "Ytotal/D");
+  Dm->Branch("Yempty", &Yempty, "Yempty/D");
+  Dm->Branch("Ydummy", &Ydummy, "Ydummy/D");
+  Dm->Branch("RNH3He4", &RNH3He4, "RNH3He4/D");
+  Dm->Branch("ENH3He4", &ENH3He4, "ENH3He4/D");
+  Dm->Branch("ENC", &ENC, "ENC/D");
+  Dm->Branch("ErrRelpf", &ErrRelpf, "ErrRelpf/D");
+  Dm->Branch("ErrRel", &ErrRel, "ErrRel/D");
+  double FF1[2], FF2[2], FF3[2], FF4[2], FF5[2];
+  double AZcarbon[2] = {6.0, 6.0};
+  double AZnitrogen[2] = {7.0, 7.0};
+  double AZhelium[2] = {2.0, 2.0};
+  pf = 0.55;
+  std::cout << "Dilution factor: pi+ " << std::endl;
+  for (int i = 0; i < Nbinp; i++){
+    Tp->GetEntry(i);
+    Ytotal = Nacc;
+    Yempty = Nacc * (1.0 - fNH3) * 3.0 / (3.0 + 3.0 * (1.0 - pf));
+    Ydummy = Nacc * (1.0 - fNH3) * (3.0 + 3.0) / (3.0 + 3.0 * (1.0 - pf));
+    YN = Nacc * (fNH3 - fp);
+    Lstructure::DISF2N_bound(AZnitrogen, var, FF1, "nitrogen-14");
+    Lstructure::DISF2N_bound(AZhelium, var, FF2, "helium-4");
+    Lstructure::DISF2p(var, FF3);
+    Lstructure::DISF2N(AZnitrogen, var, FF4);
+    Lstructure::DISF2N(AZhelium, var, FF5);
+    RNH3He4 = (FF4[0] + 3.0 * FF3[0]) / FF5[0];
+    //ENH3He4 = ((FF1[0] + 3.0 * FF3[0]) / FF2[0] - RNH3He4) / RNH3He4;
+    ENH3He4 = 0.05; 
+    ErrRelpf = ENH3He4 * RNH3He4 * 1.487 / (RNH3He4 * 1.487 - 1.0);
+    Lstructure::FUUTN_bound(AZnitrogen, var, FF1, "nitrogen-14");
+    Lstructure::FUUTN_bound(AZcarbon, var, FF2, "carbon-12");
+    //ENC = std::abs((FF1[0] / FF2[0] - 7.0/6.0) / ( 7.0 / 6.0));
+    ENC = 0.02;
+    ErrRel = sqrt( pow((Ytotal-Ydummy-YN)*pf*ErrRelpf, 2) + pow( ENC * YN * pf, 2)) / (fp * Nacc);
+    Dp->Fill();
+  }
+  std::cout << "Dilution factor: pi- " << std::endl;
+  for (int i = 0; i < Nbinm; i++){
+    Tm->GetEntry(i);
+    Ytotal = Nacc;
+    Yempty = Nacc * (1.0 - fNH3) * 3.0 / (3.0 + 3.0 * (1.0 - pf));
+    Ydummy = Nacc * (1.0 - fNH3) * (3.0 + 3.0) / (3.0 + 3.0 * (1.0 - pf));
+    YN = Nacc * (fNH3 - fp);
+    Lstructure::DISF2N_bound(AZnitrogen, var, FF1, "nitrogen-14");
+    Lstructure::DISF2N_bound(AZhelium, var, FF2, "helium-4");
+    Lstructure::DISF2p(var, FF3);
+    Lstructure::DISF2N(AZnitrogen, var, FF4);
+    Lstructure::DISF2N(AZhelium, var, FF5);
+    RNH3He4 = (FF4[0] + 3.0 * FF3[0]) / FF5[0];
+    //ENH3He4 = ((FF1[0] + 3.0 * FF3[0]) / FF2[0] - RNH3He4) / RNH3He4;
+    ENH3He4 = 0.05;
+    ErrRelpf = ENH3He4 * RNH3He4 * 1.487 / (RNH3He4 * 1.487 - 1.0);
+    Lstructure::FUUTN_bound(AZnitrogen, var, FF1, "nitrogen-14");
+    Lstructure::FUUTN_bound(AZcarbon, var, FF2, "carbon-12");
+    //ENC = std::abs((FF1[1] / FF2[1] - 7.0/6.0) / ( 7.0 / 6.0));
+    ENC = 0.02;
+    ErrRel = sqrt( pow((Ytotal-Ydummy-YN)*pf*ErrRelpf, 2) + pow( ENC * YN * pf, 2)) / (fp * Nacc);
+    Dm->Fill();
+  }
+  fs->Write();
+  return 0;
+}
+
 int Lanalysis::ETotalNeutron(const char dir[], const char savefile[]){
   TString directory = "Neutron/";
   TFile * fb11 = new TFile(directory+"sidisbin_11.root", "r");
