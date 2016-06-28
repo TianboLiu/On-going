@@ -2402,7 +2402,7 @@ int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
 }
 
 int Lanalysis::ETotalNeutron(const char dir[], const char savefile[]){
-  TString directory = dir;
+  TString directory = "Neutron/";
   TFile * fb11 = new TFile(directory+"sidisbin_11.root", "r");
   TFile * fb8 = new TFile(directory+"sidisbin_8.root", "r");
   TFile * fc11 = new TFile(directory+"sidiscoin_11.root", "r");
