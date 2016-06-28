@@ -253,7 +253,7 @@ int main(int argc, char* argv[]){
     double days = 3.5/48.0;
     double ST = 0.6;
     Neu.SetSimInfo(lumi, days, ST, 5);
-    Neu.ETotalNeutron(bintree, "Neutron/solidneutron.root");
+    Neu.ETotalNeutron("Neutron/", "Neutron/solidneutron.root");
   }
   
   return 0;
