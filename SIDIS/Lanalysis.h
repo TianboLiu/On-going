@@ -2472,12 +2472,12 @@ int Lanalysis::EDilutionProton(const char bintree[], const char savefile[]){
     Lstructure::DISF2N(AZhelium, var, FF5);
     RNH3He4 = (FF4[0] + 3.0 * FF3[0]) / FF5[0];
     //ENH3He4 = ((FF1[0] + 3.0 * FF3[0]) / FF2[0] - RNH3He4) / RNH3He4;
-    ENH3He4 = 0.05; 
-    ErrRelpf = ENH3He4 * RNH3He4 * 1.487 / (RNH3He4 * 1.487 - 1.0);
+    ENH3He4 = 0.03; 
+    ErrRelpf = sqrt(pow(ENH3He4 * RNH3He4 * 1.487 / (RNH3He4 * 1.487 - 1.0), 2) + 110.0 * (Ydummy + Yempty) / pow(Ydummy + Yempty, 2));
     Lstructure::FUUTN_bound(AZnitrogen, var, FF1, "nitrogen-14");
     Lstructure::FUUTN_bound(AZcarbon, var, FF2, "carbon-12");
     //ENC = std::abs((FF1[0] / FF2[0] - 7.0/6.0) / ( 7.0 / 6.0));
-    ENC = 0.02;
+    ENC = 0.03;
     ErrRel = sqrt( pow((Ytotal-Ydummy-YN)*pf*ErrRelpf, 2) + pow( ENC * YN * pf, 2)) / (fp * Nacc);
     Dp->Fill();
   }
@@ -2495,12 +2495,12 @@ int Lanalysis::EDilutionProton(const char bintree[], const char savefile[]){
     Lstructure::DISF2N(AZhelium, var, FF5);
     RNH3He4 = (FF4[0] + 3.0 * FF3[0]) / FF5[0];
     //ENH3He4 = ((FF1[0] + 3.0 * FF3[0]) / FF2[0] - RNH3He4) / RNH3He4;
-    ENH3He4 = 0.05;
-    ErrRelpf = ENH3He4 * RNH3He4 * 1.487 / (RNH3He4 * 1.487 - 1.0);
+    ENH3He4 = 0.03;
+    ErrRelpf = sqrt(pow(ENH3He4 * RNH3He4 * 1.487 / (RNH3He4 * 1.487 - 1.0), 2) + 110.0 * (Ydummy + Yempty) / pow(Ydummy + Yempty, 2));
     Lstructure::FUUTN_bound(AZnitrogen, var, FF1, "nitrogen-14");
     Lstructure::FUUTN_bound(AZcarbon, var, FF2, "carbon-12");
     //ENC = std::abs((FF1[1] / FF2[1] - 7.0/6.0) / ( 7.0 / 6.0));
-    ENC = 0.02;
+    ENC = 0.03;
     ErrRel = sqrt( pow((Ytotal-Ydummy-YN)*pf*ErrRelpf, 2) + pow( ENC * YN * pf, 2)) / (fp * Nacc);
     Dm->Fill();
   }
