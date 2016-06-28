@@ -2402,14 +2402,15 @@ int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
 }
 
 int Lanalysis::ETotalNeutron(const char dir[], const char savefile[]){
-  TFile * fb11 = new TFile(dir+"sidisbin_11.root", "r");
-  TFile * fb8 = new TFile(dir+"sidisbin_8.root", "r");
-  TFile * fc11 = new TFile(dir+"sidiscoin_11.root", "r");
-  TFile * fc8 = new TFile(dir+"sidiscoin_8.root", "r");
-  TFile * fr11 = new TFile(dir+"sidisres_11.root", "r");
-  TFile * fr8 = new TFile(dir+"sidisres_8.root", "r");
-  TFile * fn11 = new TFile(dir+"sidisnucl_11.root", "r");
-  TFile * fn8 = new TFile(dir+"sidisnucl_8.root", "r");
+  TString directory = dir;
+  TFile * fb11 = new TFile(directory+"sidisbin_11.root", "r");
+  TFile * fb8 = new TFile(directory+"sidisbin_8.root", "r");
+  TFile * fc11 = new TFile(directory+"sidiscoin_11.root", "r");
+  TFile * fc8 = new TFile(directory+"sidiscoin_8.root", "r");
+  TFile * fr11 = new TFile(directory+"sidisres_11.root", "r");
+  TFile * fr8 = new TFile(directory+"sidisres_8.root", "r");
+  TFile * fn11 = new TFile(directory+"sidisnucl_11.root", "r");
+  TFile * fn8 = new TFile(directory+"sidisnucl_8.root", "r");
   //Set branch
   double BinNumber, Nbin;
   double Nucleon, Hadron, Ebeam;
