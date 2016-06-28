@@ -2401,6 +2401,374 @@ int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
   return 0;
 }
 
+int Lanalysis::ETotalNeutron(const char dir[], const char savefile[]){
+  TFile * fb11 = new TFile(dir+"sidisbin_11.root", "r");
+  TFile * fb8 = new TFile(dir+"sidisbin_8.root", "r");
+  TFile * fc11 = new TFile(dir+"sidiscoin_11.root", "r");
+  TFile * fc8 = new TFile(dir+"sidiscoin_8.root", "r");
+  TFile * fr11 = new TFile(dir+"sidisres_11.root", "r");
+  TFile * fr8 = new TFile(dir+"sidisres_8.root", "r");
+  TFile * fn11 = new TFile(dir+"sidisnucl_11.root", "r");
+  TFile * fn8 = new TFile(dir+"sidisnucl_8.root", "r");
+  //Set branch
+  double BinNumber, Nbin;
+  double Nucleon, Hadron, Ebeam;
+  double x, y, z, Q2, Pt, fn;
+  double A1, A2, A3;
+  double E1stat, E2stat, E3stat;
+  double E1rel, E2rel, E3rel, E1abs, E2abs, E3abs;
+  double Err[3], tmp[3], temp1, temp2, temp3;
+  TTree * Tb, Tc, Tr, Tn;
+  //savefile
+  TFile * ft = new TFile(savefile, "RECREATE");
+  TTree * Ft = new TTree("data", "data");
+  Ft->SetDirectory(ft);
+  Ft->Branch("Nucleon", &Nucleon, "Nucleon/D");
+  Ft->Branch("Hadron", &Hadron, "Hadron/D");
+  Ft->Branch("Ebeam", &Ebeam, "Ebeam/D");
+  Ft->Branch("x", &x, "x/D");
+  Ft->Branch("y", &y, "y/D");
+  Ft->Branch("z", &z, "z/D");
+  Ft->Branch("Q2", &Q2, "Q2/D");
+  Ft->Branch("Pt", &Pt, "Pt/D");
+  Ft->Branch("fn", &fn, "fn/D");
+  Ft->Branch("A1", &A1, "A1/D");
+  Ft->Branch("A2", &A2, "A2/D");
+  Ft->Branch("A3", &A3, "A3/D");
+  Ft->Branch("E1stat", &E1stat, "E1stat/D");
+  Ft->Branch("E2stat", &E2stat, "E2stat/D");
+  Ft->Branch("E3stat", &E3stat, "E3stat/D");
+  Ft->Branch("E1rel", &E1rel, "E1rel/D");
+  Ft->Branch("E2rel", &E2rel, "E2rel/D");
+  Ft->Branch("E3rel", &E3rel, "E3rel/D");
+  Ft->Branch("E1abs", &E1abs, "E1abs/D");
+  Ft->Branch("E2abs", &E2abs, "E1abs/D");
+  Ft->Branch("E3abs", &E3abs, "E1abs/D");
+  //11 GeV pi+
+  Tb = (TTree *) fb11->Get("binplus");
+  Tc = (TTree *) fc11->Get("coinplus");
+  Tr = (TTree *) fr11->Get("Rp");
+  Tn = (TTree *) fn11->Get("nuclplus");
+  Nbin = Tb->GetEntries();
+  Nucleon = 0;
+  Hadron = 0;
+  Tb->SetBranchAddress("BinNumber", &BinNumber);
+  Tb->SetBranchAddress("Ebeam", &Ebeam);
+  Tb->SetBranchAddress("xm", &x);
+  Tb->SetBranchAddress("ym", &y);
+  Tb->SetBranchAddress("zm", &z);
+  Tb->SetBranchAddress("Q2m", &Q2);
+  Tb->SetBranchAddress("Ptm", &Pt);
+  Tb->SetBranchAddress("fn", &fn);
+  Tb->SetBranchAddress("A1n", &A1);
+  Tb->SetBranchAddress("A2n", &A2);
+  Tb->SetBranchAddress("A3n", &A3);
+  Tb->SetBranchAddress("E1stat", &Err[0]);
+  Tb->SetBranchAddress("E2stat", &Err[1]);
+  Tb->SetBranchAddress("E3stat", &Err[2]);
+  Tc->SetBranchAddress("SB", &temp1);
+  Tc->SetBranchAddress("ErrRel", &temp2);
+  Tr->SetBranchAddress("ErrRelH1", &Err[0]);
+  Tr->SetBranchAddress("ErrRelH2", &Err[1]);
+  Tr->SetBranchAddress("ErrRelH3", &Err[2]);
+  Tr->SetBranchAddress("ErrRelS1", &tmp[0]);
+  Tr->SetBranchAddress("ErrRelS2", &tmp[1]);
+  Tr->SetBranchAddress("ErrRelS3", &tmp[2]);
+  Tn->SetBranchAddress("ErrRel1", &Err[0]);
+  Tn->SetBranchAddress("ErrRel2", &Err[1]);
+  Tn->SetBranchAddress("ErrRel3", &Err[2]);
+  std::cout << "Total error: 11GeV pi+" << std::endl;
+  for(int i = 0; i < Nbin; i++){
+    //statistics
+    Tb->GetEntry(i);
+    E1stat = Err[0] / _ST / fn / 0.86;
+    E2stat = Err[1] / _ST / fn / 0.86;
+    E3stat = Err[2] / _ST / fn / 0.86;
+    //raw asymmetry (square)
+    E1abs = pow(0.01 / sqrt(3456.0) / _ST / fn / 0.86, 2);
+    E2abs = pow(0.01 / sqrt(3456.0) / _ST / fn / 0.86, 2);
+    E3abs = pow(0.01 / sqrt(3456.0) / _ST / fn / 0.86, 2);
+    //target polarization (square)
+    E1rel = 0.03*0.03;
+    E2rel = 0.03*0.03;
+    E3rel = 0.03*0.03;
+    //coincidence (square)
+    Tc->GetEntry(i);
+    E1rel = E1rel + pow(0.2/(1.0 + temp1), 2);
+    E2rel = E2rel + pow(0.2/(1.0 + temp1), 2);
+    E3rel = E3rel + pow(0.2/(1.0 + temp1), 2);
+    //resolution (square)
+    Tr->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0] + tmp[0]*tmp[0];
+    E2rel = E2rel + Err[1]*Err[1] + tmp[1]*tmp[1];
+    E3rel = E3rel + Err[2]*Err[2] + tmp[2]*tmp[2];
+    //nuclear effect (square);
+    Tn->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0];
+    E2rel = E2rel + Err[1]*Err[1];
+    E3rel = E3rel + Err[2]*Err[2];
+    //radiative (square)
+    E1rel = E1rel + 0.02*0.02;
+    E2rel = E2rel + 0.02*0.02;
+    E3rel = E3rel + 0.02*0.02;
+    //diffractiv (square)
+    E1rel = E1rel + 0.03*0.03;
+    E2rel = E2rel + 0.03*0.03;
+    E3rel = E3rel + 0.03*0.03;
+    //total
+    E1abs = sqrt(E1abs);
+    E2abs = sqrt(E2abs);
+    E3abs = sqrt(E3abs);
+    E1rel = sqrt(E1rel);
+    E2rel = sqrt(E2rel);
+    E3rel = sqrt(E3rel);
+    Ft->Fill();
+  }
+  //8.8 GeV pi+
+  Tb = (TTree *) fb8->Get("binplus");
+  Tc = (TTree *) fc8->Get("coinplus");
+  Tr = (TTree *) fr8->Get("Rp");
+  Tn = (TTree *) fn8->Get("nuclplus");
+  Nbin = Tb->GetEntries();
+  Nucleon = 0;
+  Hadron = 0;
+  Tb->SetBranchAddress("BinNumber", &BinNumber);
+  Tb->SetBranchAddress("Ebeam", &Ebeam);
+  Tb->SetBranchAddress("xm", &x);
+  Tb->SetBranchAddress("ym", &y);
+  Tb->SetBranchAddress("zm", &z);
+  Tb->SetBranchAddress("Q2m", &Q2);
+  Tb->SetBranchAddress("Ptm", &Pt);
+  Tb->SetBranchAddress("fn", &fn);
+  Tb->SetBranchAddress("A1n", &A1);
+  Tb->SetBranchAddress("A2n", &A2);
+  Tb->SetBranchAddress("A3n", &A3);
+  Tb->SetBranchAddress("E1stat", &Err[0]);
+  Tb->SetBranchAddress("E2stat", &Err[1]);
+  Tb->SetBranchAddress("E3stat", &Err[2]);
+  Tc->SetBranchAddress("SB", &temp1);
+  Tc->SetBranchAddress("ErrRel", &temp2);
+  Tr->SetBranchAddress("ErrRelH1", &Err[0]);
+  Tr->SetBranchAddress("ErrRelH2", &Err[1]);
+  Tr->SetBranchAddress("ErrRelH3", &Err[2]);
+  Tr->SetBranchAddress("ErrRelS1", &tmp[0]);
+  Tr->SetBranchAddress("ErrRelS2", &tmp[1]);
+  Tr->SetBranchAddress("ErrRelS3", &tmp[2]);
+  Tn->SetBranchAddress("ErrRel1", &Err[0]);
+  Tn->SetBranchAddress("ErrRel2", &Err[1]);
+  Tn->SetBranchAddress("ErrRel3", &Err[2]);
+  std::cout << "Total error: 8.8GeV pi+" << std::endl;
+  for(int i = 0; i < Nbin; i++){
+    //statistics
+    Tb->GetEntry(i);
+    E1stat = Err[0] / _ST / fn / 0.86;
+    E2stat = Err[1] / _ST / fn / 0.86;
+    E3stat = Err[2] / _ST / fn / 0.86;
+    //raw asymmetry (square)
+    E1abs = pow(0.01 / sqrt(1512.0) / _ST / fn / 0.86, 2);
+    E2abs = pow(0.01 / sqrt(1512.0) / _ST / fn / 0.86, 2);
+    E3abs = pow(0.01 / sqrt(1512.0) / _ST / fn / 0.86, 2);
+    //target polarization (square)
+    E1rel = 0.03*0.03;
+    E2rel = 0.03*0.03;
+    E3rel = 0.03*0.03;
+    //coincidence (square)
+    Tc->GetEntry(i);
+    E1rel = E1rel + pow(0.2/(1.0 + temp1), 2);
+    E2rel = E2rel + pow(0.2/(1.0 + temp1), 2);
+    E3rel = E3rel + pow(0.2/(1.0 + temp1), 2);
+    //resolution (square)
+    Tr->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0] + tmp[0]*tmp[0];
+    E2rel = E2rel + Err[1]*Err[1] + tmp[1]*tmp[1];
+    E3rel = E3rel + Err[2]*Err[2] + tmp[2]*tmp[2];
+    //nuclear effect (square);
+    Tn->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0];
+    E2rel = E2rel + Err[1]*Err[1];
+    E3rel = E3rel + Err[2]*Err[2];
+    //radiative (square)
+    E1rel = E1rel + 0.02*0.02;
+    E2rel = E2rel + 0.02*0.02;
+    E3rel = E3rel + 0.02*0.02;
+    //diffractiv (square)
+    E1rel = E1rel + 0.03*0.03;
+    E2rel = E2rel + 0.03*0.03;
+    E3rel = E3rel + 0.03*0.03;
+    //total
+    E1abs = sqrt(E1abs);
+    E2abs = sqrt(E2abs);
+    E3abs = sqrt(E3abs);
+    E1rel = sqrt(E1rel);
+    E2rel = sqrt(E2rel);
+    E3rel = sqrt(E3rel);
+    Ft->Fill();
+  }
+  //11 GeV pi-
+  Tb = (TTree *) fb11->Get("binminus");
+  Tc = (TTree *) fc11->Get("coinminus");
+  Tr = (TTree *) fr11->Get("Rm");
+  Tn = (TTree *) fn11->Get("nuclminus");
+  Nbin = Tb->GetEntries();
+  Nucleon = 0;
+  Hadron = 1;
+  Tb->SetBranchAddress("BinNumber", &BinNumber);
+  Tb->SetBranchAddress("Ebeam", &Ebeam);
+  Tb->SetBranchAddress("xm", &x);
+  Tb->SetBranchAddress("ym", &y);
+  Tb->SetBranchAddress("zm", &z);
+  Tb->SetBranchAddress("Q2m", &Q2);
+  Tb->SetBranchAddress("Ptm", &Pt);
+  Tb->SetBranchAddress("fn", &fn);
+  Tb->SetBranchAddress("A1n", &A1);
+  Tb->SetBranchAddress("A2n", &A2);
+  Tb->SetBranchAddress("A3n", &A3);
+  Tb->SetBranchAddress("E1stat", &Err[0]);
+  Tb->SetBranchAddress("E2stat", &Err[1]);
+  Tb->SetBranchAddress("E3stat", &Err[2]);
+  Tc->SetBranchAddress("SB", &temp1);
+  Tc->SetBranchAddress("ErrRel", &temp2);
+  Tr->SetBranchAddress("ErrRelH1", &Err[0]);
+  Tr->SetBranchAddress("ErrRelH2", &Err[1]);
+  Tr->SetBranchAddress("ErrRelH3", &Err[2]);
+  Tr->SetBranchAddress("ErrRelS1", &tmp[0]);
+  Tr->SetBranchAddress("ErrRelS2", &tmp[1]);
+  Tr->SetBranchAddress("ErrRelS3", &tmp[2]);
+  Tn->SetBranchAddress("ErrRel1", &Err[0]);
+  Tn->SetBranchAddress("ErrRel2", &Err[1]);
+  Tn->SetBranchAddress("ErrRel3", &Err[2]);
+  std::cout << "Total error: 11GeV pi-" << std::endl;
+  for(int i = 0; i < Nbin; i++){
+    //statistics
+    Tb->GetEntry(i);
+    E1stat = Err[0] / _ST / fn / 0.86;
+    E2stat = Err[1] / _ST / fn / 0.86;
+    E3stat = Err[2] / _ST / fn / 0.86;
+    //raw asymmetry (square)
+    E1abs = pow(0.01 / sqrt(3456.0) / _ST / fn / 0.86, 2);
+    E2abs = pow(0.01 / sqrt(3456.0) / _ST / fn / 0.86, 2);
+    E3abs = pow(0.01 / sqrt(3456.0) / _ST / fn / 0.86, 2);
+    //target polarization (square)
+    E1rel = 0.03*0.03;
+    E2rel = 0.03*0.03;
+    E3rel = 0.03*0.03;
+    //coincidence (square)
+    Tc->GetEntry(i);
+    E1rel = E1rel + pow(0.2/(1.0 + temp1), 2);
+    E2rel = E2rel + pow(0.2/(1.0 + temp1), 2);
+    E3rel = E3rel + pow(0.2/(1.0 + temp1), 2);
+    //resolution (square)
+    Tr->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0] + tmp[0]*tmp[0];
+    E2rel = E2rel + Err[1]*Err[1] + tmp[1]*tmp[1];
+    E3rel = E3rel + Err[2]*Err[2] + tmp[2]*tmp[2];
+    //nuclear effect (square);
+    Tn->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0];
+    E2rel = E2rel + Err[1]*Err[1];
+    E3rel = E3rel + Err[2]*Err[2];
+    //radiative (square)
+    E1rel = E1rel + 0.02*0.02;
+    E2rel = E2rel + 0.02*0.02;
+    E3rel = E3rel + 0.02*0.02;
+    //diffractiv (square)
+    E1rel = E1rel + 0.02*0.02;
+    E2rel = E2rel + 0.02*0.02;
+    E3rel = E3rel + 0.02*0.02;
+    //total
+    E1abs = sqrt(E1abs);
+    E2abs = sqrt(E2abs);
+    E3abs = sqrt(E3abs);
+    E1rel = sqrt(E1rel);
+    E2rel = sqrt(E2rel);
+    E3rel = sqrt(E3rel);
+    Ft->Fill();
+  }
+  //8.8 GeV pi-
+  Tb = (TTree *) fb8->Get("binminus");
+  Tc = (TTree *) fc8->Get("coinminus");
+  Tr = (TTree *) fr8->Get("Rm");
+  Tn = (TTree *) fn8->Get("nuclminus");
+  Nbin = Tb->GetEntries();
+  Nucleon = 0;
+  Hadron = 1;
+  Tb->SetBranchAddress("BinNumber", &BinNumber);
+  Tb->SetBranchAddress("Ebeam", &Ebeam);
+  Tb->SetBranchAddress("xm", &x);
+  Tb->SetBranchAddress("ym", &y);
+  Tb->SetBranchAddress("zm", &z);
+  Tb->SetBranchAddress("Q2m", &Q2);
+  Tb->SetBranchAddress("Ptm", &Pt);
+  Tb->SetBranchAddress("fn", &fn);
+  Tb->SetBranchAddress("A1n", &A1);
+  Tb->SetBranchAddress("A2n", &A2);
+  Tb->SetBranchAddress("A3n", &A3);
+  Tb->SetBranchAddress("E1stat", &Err[0]);
+  Tb->SetBranchAddress("E2stat", &Err[1]);
+  Tb->SetBranchAddress("E3stat", &Err[2]);
+  Tc->SetBranchAddress("SB", &temp1);
+  Tc->SetBranchAddress("ErrRel", &temp2);
+  Tr->SetBranchAddress("ErrRelH1", &Err[0]);
+  Tr->SetBranchAddress("ErrRelH2", &Err[1]);
+  Tr->SetBranchAddress("ErrRelH3", &Err[2]);
+  Tr->SetBranchAddress("ErrRelS1", &tmp[0]);
+  Tr->SetBranchAddress("ErrRelS2", &tmp[1]);
+  Tr->SetBranchAddress("ErrRelS3", &tmp[2]);
+  Tn->SetBranchAddress("ErrRel1", &Err[0]);
+  Tn->SetBranchAddress("ErrRel2", &Err[1]);
+  Tn->SetBranchAddress("ErrRel3", &Err[2]);
+  std::cout << "Total error: 8.8GeV pi-" << std::endl;
+  for(int i = 0; i < Nbin; i++){
+    //statistics
+    Tb->GetEntry(i);
+    E1stat = Err[0] / _ST / fn / 0.86;
+    E2stat = Err[1] / _ST / fn / 0.86;
+    E3stat = Err[2] / _ST / fn / 0.86;
+    //raw asymmetry (square)
+    E1abs = pow(0.01 / sqrt(1512.0) / _ST / fn / 0.86, 2);
+    E2abs = pow(0.01 / sqrt(1512.0) / _ST / fn / 0.86, 2);
+    E3abs = pow(0.01 / sqrt(1512.0) / _ST / fn / 0.86, 2);
+    //target polarization (square)
+    E1rel = 0.03*0.03;
+    E2rel = 0.03*0.03;
+    E3rel = 0.03*0.03;
+    //coincidence (square)
+    Tc->GetEntry(i);
+    E1rel = E1rel + pow(0.2/(1.0 + temp1), 2);
+    E2rel = E2rel + pow(0.2/(1.0 + temp1), 2);
+    E3rel = E3rel + pow(0.2/(1.0 + temp1), 2);
+    //resolution (square)
+    Tr->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0] + tmp[0]*tmp[0];
+    E2rel = E2rel + Err[1]*Err[1] + tmp[1]*tmp[1];
+    E3rel = E3rel + Err[2]*Err[2] + tmp[2]*tmp[2];
+    //nuclear effect (square);
+    Tn->GetEntry(i);
+    E1rel = E1rel + Err[0]*Err[0];
+    E2rel = E2rel + Err[1]*Err[1];
+    E3rel = E3rel + Err[2]*Err[2];
+    //radiative (square)
+    E1rel = E1rel + 0.02*0.02;
+    E2rel = E2rel + 0.02*0.02;
+    E3rel = E3rel + 0.02*0.02;
+    //diffractiv (square)
+    E1rel = E1rel + 0.02*0.02;
+    E2rel = E2rel + 0.02*0.02;
+    E3rel = E3rel + 0.02*0.02;
+    //total
+    E1abs = sqrt(E1abs);
+    E2abs = sqrt(E2abs);
+    E3abs = sqrt(E3abs);
+    E1rel = sqrt(E1rel);
+    E2rel = sqrt(E2rel);
+    E3rel = sqrt(E3rel);
+    Ft->Fill();
+  }
+  ft->Write();
+  return 0;
+}
+  
+
 int Lanalysis::ThreetermMatrix(const double * hr, double * M3inv){
   double a = hr[0];
   double b = hr[1];
