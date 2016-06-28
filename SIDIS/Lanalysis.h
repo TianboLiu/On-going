@@ -2419,7 +2419,10 @@ int Lanalysis::ETotalNeutron(const char dir[], const char savefile[]){
   double E1stat, E2stat, E3stat;
   double E1rel, E2rel, E3rel, E1abs, E2abs, E3abs;
   double Err[3], tmp[3], temp1, temp2, temp3;
-  TTree * Tb, * Tc, * Tr, * Tn;
+  TTree * Tb;
+  TTree * Tc;
+  TTree * Tr;
+  TTree * Tn;
   //savefile
   TFile * ft = new TFile(savefile, "RECREATE");
   TTree * Ft = new TTree("data", "data");
