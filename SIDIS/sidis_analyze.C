@@ -224,7 +224,7 @@ int main(int argc, char* argv[]){
   }
 
   /************************************************/
-  if (true){//Nuclear effect N11
+  if (false){//Nuclear effect N11
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
     TString bintree = "Neutron/sidisbin_11.root";
     Lanalysis N11(datadir);
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]){
     N11.SetSimInfo(lumi, days, ST, 5);
     N11.ENuclearNeutron(bintree, "Neutron/sidisnucl_11.root");
   }
-  if (true){//Nuclear effect N8
+  if (false){//Nuclear effect N8
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
     TString bintree = "Neutron/sidisbin_8.root";
     Lanalysis N8(datadir);
@@ -244,6 +244,17 @@ int main(int argc, char* argv[]){
     N8.SetSimInfo(lumi, days, ST, 5);
     N8.ENuclearNeutron(bintree, "Neutron/sidisnucl_8.root");
   }
-
+  /************************************************/
+  if (true){//Total Neutron
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
+    TString bintree = "Neutron/sidisbin_11.root";
+    Lanalysis Neu(datadir);
+    double lumi = 1.0e+10 * pow(0.197327, 2);
+    double days = 3.5/48.0;
+    double ST = 0.6;
+    Neu.SetSimInfo(lumi, days, ST, 5);
+    Neu.ETotalNeutron(bintree, "Neutron/solidneutron.root");
+  }
+  
   return 0;
 }
