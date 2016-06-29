@@ -232,7 +232,7 @@ double Lsample::Chi2A2(const int err = 1, const double * fitpara = 0){
   for (int i = 0; i < _Ndata; i++){
     if (_Nucleon[i] == 0) Lstructure::AsinHpSn(_kin[i], Asym, Tf, TD);
     else if (_Nucleon[i] == 1) Lstructure::AsinHpSp(_kin[i], Asym, Tf, TD);
-    _A[i] = Asym[(int) _Hadron[i]];
+    _A[i] = Asym[(int)_Hadron[i]];
     if (err == 0){
       sum = sum + pow( (_A[i] - _A0[i]) / _E0[i], 2);
     }
