@@ -8,6 +8,7 @@
 #include "TRandom3.h"
 #include "TMath.h"
 #include "TString.h"
+#include "TVectorD.h"
 #include "TMatrixD.h"
 #include "TMatrixDEigen.h"
 #include "TTree.h"
@@ -33,6 +34,7 @@ class Lsample{
   double _eigenvalues[11];
   double _para[11];
   double _central[11];
+  int _err;
  public:
   Lsample(int Atype);
   int InitialA1para();
@@ -47,6 +49,9 @@ class Lsample{
   double SetHessianA1(const int err);
   double SetHessianA2(const int err);
   double SetHessianA3(const int err);
+  int LikeliSampleA1(double calls, const char * savefile);
+  int LikeliSampleA2(double calls, const char * savefile);
+  int LikeliSampleA3(double calls, const char * savefile);
 };
 
 Lsample::Lsample(int Atype){
@@ -247,6 +252,7 @@ double Lsample::Chi2A2(const int err = 1, const double * fitpara = 0){
 }
 
 double Lsample::SetHessianA2(const int err){
+  _err = err;
   double da = 1.0e-8;
   double db = 1.0e-8;
   double chi2min = Chi2A2(err);
@@ -271,19 +277,72 @@ double Lsample::SetHessianA2(const int err){
     }
   }
   TMatrixDEigen eigen(hessian);
-  TVectorD ev = eigen.GetEigenValues();
-  ev.Print();
+  TMatrixD ev = eigen.GetEigenValues();
   TMatrixD smatrix = eigen.GetEigenVectors();
-  smatrix.Print();
   for (int i = 0; i < 9; i++){
     _eigenvalues[i] = ev(i);
-    std::cout << _eigenvalues[i] << " " ;
     for (int j = 0; j < 9; j++){
       _smatrix[i][j] = smatrix(i, j);
     }
   }
-  std::cout << std::endl;
   return 0;
 }
+
+int Lsample::LikeliSampleA2(double calls, const char * savefile){
+  TFile * fs = new TFile(savefile, "RECREATE");
+  TTree * Ts = new TTree("fitpara", "fitpara");
+  Ts->SetDirectory(fs);
+  double as[9], bs[9];
+  double para[9];
+  double weight, bound, chi2;
+  double kt2 = 0.25;
+  Ts->Branch("Nu", &para[0], "Nu/D");
+  Ts->Branch("Nd", &para[1], "Nd/D");
+  Ts->Branch("au", &para[2], "au/D");
+  Ts->Branch("ad", &para[2], "ad/D");
+  Ts->Branch("bu", &para[3], "bu/D");
+  Ts->Branch("bd", &para[3], "bd/D");
+  Ts->Branch("kt2", &kt2, "kt2/D");
+  Ts->Branch("Nfav", &para[4], "Nfav/D");
+  Ts->Branch("Ndis", &para[5], "Ndis/D");
+  Ts->Branch("cu", &para[6], "cu/D");
+  Ts->Branch("cd", &para[6], "cd/D");
+  Ts->Branch("du", &para[7], "du/D");
+  Ts->Branch("dd", &para[7], "dd/D");
+  Ts->Branch("MC2", &para[8], "MC2/D");
+  Ts->Branch("Chi2", &chi2, "Chi2/D");
+  Ts->Branch("weight", &weight, "weight/D");
+  Ts->Branch("bound", &bound, "bound/D");
+  double cup;
+  TRandom3 * ran;
+  ran->SetSeed(0);
+  for (Long64_t n = 0; n < calls; i++){
+    cup = 1;
+    for (int j = 0; j < 9; j++){
+      bs[j] = ran->Gaus(0.0, 1.0/sqrt(eigenvalues[j]));
+      as[j] = 0.0;
+      cup = cup * exp(-bs[j]*bs[j]*eigenvalues[j]/2.0);
+    }
+    for (int i = 0; i < 9; i++){
+      for(int j = 0; j < 9; j++){
+	as[i] = as[i] + _smatrix[i][j] * bs[j];
+      }
+    }
+    for (int i = 0; i < 9; i++){
+      para[i] = _central[i] + as[i];
+    }
+    if (std::abs(para[0]) > 1.0 || std::abs(para[1]) > 1.0) bound = 0;
+    else if (std::abs(para[4]) > 1.0 || std::abs(para[5]) > 1.0) bound = 0;
+    else bound = 1;
+    chi2 = Chi2A2(_err, para);
+    weight = exp(-chi2/2.0) / cup;
+    Ts->Fill();
+  }
+  fs->Write();
+  return 0;
+}
+    
+    
+  
   
 #endif
