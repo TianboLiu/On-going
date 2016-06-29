@@ -9,6 +9,7 @@
 #include "TMath.h"
 #include "TString.h"
 #include "TMatrixD.h"
+#include "TMatrixDEigen.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "Lstructure.h"
@@ -37,20 +38,24 @@ class Lsample{
   int InitialA1para();
   int InitialA2para();
   int InitialA3para();
-  int GetNeutronPlusData(const char * datafile);
-  int GetNeutronMinusData(const char * datafile);
-  int GetProtonPlusData(const char * datafile);
-  int GetProtonMinusData(const char * datafile);
+  int GetData(const char * datafile, const int Atype);
+  int PrintData(const int n);
+  int PrintStatus();
+  double Chi2A1(const double * fitpara);
+  double Chi2A2(const double * fitpara);
+  double Chi2A3(const double * fitpara);
 };
 
 Lsample::Lsample(int Atype){
   _Atype = Atype;
+  _Ndata = 0;
   if (Atype == 1) _PSD = 9;
   else if (Atype == 2) _PSD = 9;
   else if (Atype == 3) _PSD = 4;
   else {
     _PSD = 0;
     std::cout << "Lsample initialize error: invalid asymmetry type!" << std::endl;
+  }
 }
 
 int Lsample::InitialA1para(){
@@ -125,4 +130,64 @@ int Lsample::InitialA3para(){
   _central[3] = _para[4];//Mh2
   return 0;
 }
+ 
+int Lsample::GetData(const char * datafile, const int Atype){
+  if (Atype != _Atype && _Ndata != 0){
+    std::cout << "Lsample::GetData: dismatch Atype!" << std::endl;
+    return 1;
+  }
+  _Atype = Atype;
+  TFile * fd = new TFile(datafile, "r");
+  TTree * Td = (TTree *) fd->Get("data");
+  double ndata = Td->GetEntries();
+  double Nucleon, Hadron, Ebeam;
+  double kin[5];
+  double Asym[3], Estat[3], Eabs[3], Erel[3];
+  Td->SetBranchAddress("Nucleon", &Nucleon);
+  Td->SetBranchAddress("Hadron", &Hadron);
+  Td->SetBranchAddress("Ebeam", &Ebeam);
+  Td->SetBranchAddress("x", &kin[0]);
+  Td->SetBranchAddress("y", &kin[1]);
+  Td->SetBranchAddress("z", &kin[2]);
+  Td->SetBranchAddress("Q2", &kin[3]);
+  Td->SetBranchAddress("Pt", &kin[4]);
+  Td->SetBranchAddress("A1", &Asym[0]);
+  Td->SetBranchAddress("A2", &Asym[1]);
+  Td->SetBranchAddress("A3", &Asym[2]);
+  Td->SetBranchAddress("E1stat", &Estat[0]);
+  Td->SetBranchAddress("E2stat", &Estat[1]);
+  Td->SetBranchAddress("E3stat", &Estat[2]);
+  Td->SetBranchAddress("E1abs", &Eabs[0]);
+  Td->SetBranchAddress("E2abs", &Eabs[1]);
+  Td->SetBranchAddress("E3abs", &Eabs[2]);
+  Td->SetBranchAddress("E1rel", &Erel[0]);
+  Td->SetBranchAddress("E2rel", &Erel[1]);
+  Td->SetBranchAddress("E3rel", &Erel[2]);
+  for (int i = 0; i < ndata; i++){
+    Td->GetEntry(i);
+    _Nucleon[_Ndata + i] = Nucleon;
+    _Hadron[_Ndata + i] = Hadron;
+    for (int j = 0; j < 5; j++){
+      _kin[_Ndata + i][j] = kin[j];
+    }
+    _A0[_Ndata + i] = Asym[Atype - 1];
+    _E0[_Ndata + i] = Estat[Atype - 1];
+    _ET[_Ndata + i] = sqrt(Estat[Atype - 1] * Estat[Atype - 1] + Eabs[Atype - 1] * Eabs[Atype - 1] + Erel[Atype - 1] * Erel[Atype - 1] * Asym[Atype - 1] * Asym[Atype - 1]);
+  }
+  _Ndata = _Ndata + ndata;
+  return 0;
+}
 
+int Lsample::PrintData(const int n){
+  if (n >= _Ndata){
+    std::cout << "Lsample::PrintData: overflow!" << std::endl;
+    return 1;
+  }
+  printf("   x       y       z       Q2      Pt     A   Estat  Etotal\n");
+  printf("%.4f  %.4f  %.4f  %.4f  %.4f  %.6f  %.6f  %.6f\n", _kin[n][0], _kin[n][1], _kin[n][2], _kin[n][3], _kin[n][4], _A0[n], _E0[n], _ET[n]);
+  return 0;
+}
+
+
+
+#endif
