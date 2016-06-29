@@ -44,6 +44,9 @@ class Lsample{
   double Chi2A1(const int err, const double * fitpara);
   double Chi2A2(const int err, const double * fitpara);
   double Chi2A3(const int err, const double * fitpara);
+  double SetHessianA1(const int err);
+  double SetHessianA2(const int err);
+  double SetHessianA3(const int err);
 };
 
 Lsample::Lsample(int Atype){
