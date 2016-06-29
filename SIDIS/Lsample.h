@@ -29,7 +29,7 @@ class Lsample{
   double _A[_NMAX_];
   int _PSD;//parameter space dimension
   double _hessian[11][11];
-  double _eigenvectors[11][11];
+  double _smatrix[11][11];
   double _eigenvalues[11];
   double _para[11];
   double _central[11];
@@ -270,7 +270,19 @@ double Lsample::SetHessianA2(const int err){
       _hessian[i][j] = hessian(i, j);
     }
   }
-  hessian.Print();
+  TMatrixDEigen eigen(hessian);
+  TVectorD ev = eigen.GetEigenValues();
+  ev.Print();
+  TMatrixD smatrix = eigen.GetEigenVectors();
+  smatrix.Print();
+  for (int i = 0; i < 9; i++){
+    _eigenvalues[i] = ev(i);
+    std::cout << _eigenvalues[i] << " " ;
+    for (int j = 0; j < 9; j++){
+      _smatrix[i][j] = smatrix(i, j);
+    }
+  }
+  std::cout << std::endl;
   return 0;
 }
   
