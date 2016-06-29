@@ -58,6 +58,7 @@ class Lsample{
   int UniformSampleA3(const int _err, const int calls, const char * savefile);
   double FindChi2Limit(const char * paraset, const double CL, const int cut);
   int GetFith1charge(const double Q2, double tc[3][6], const char * paraset, const double CL, const int cut);
+  int GetFith1charge_part(const double Q2, double tc[3][6], const double xl, const double xu, const char * paraset, const double CL, const int cut);
 };
 
 Lsample::Lsample(int Atype){
@@ -375,7 +376,8 @@ int Lsample::UniformSampleA2(const int err, const int calls, const char * savefi
   Ts->SetDirectory(fs);
   double para[9];
   double shift[9];
-  double width[9] = {0.025, 0.05, 0.025, 0.11, 0.03, 0.048, 0.055, 0.07, 0.06};
+  //double width[9] = {0.025, 0.05, 0.025, 0.11, 0.03, 0.048, 0.055, 0.07, 0.06};
+  double width[9] = {0.02, 0.05, 0.025, 0.11, 0.03, 0.048, 0.05, 0.05, 0.06};
   double weight, bound, chi2;
   double kt2 = 0.25;
   Ts->Branch("Nu", &para[0], "Nu/D");
@@ -491,6 +493,39 @@ int Lsample::GetFith1charge(const double Q2, double tc[3][6], const char * paras
   return 0;
 }
 
-
+int Lsample::GetFith1charge_part(const double Q2, double tc[3][6], const double xl, const double xu, const char * paraset, const double CL, const int cut){
+  TFile * fr = new TFile(paraset,"r");
+  TTree * Tr = (TTree *) fr->Get("fitpara"); 
+  int Nentry = Tr->GetEntries();
+  double hpara[7];
+  double Chi2, bound;
+  Tr->SetBranchAddress("Nu", &hpara[0]);
+  Tr->SetBranchAddress("Nd", &hpara[1]);
+  Tr->SetBranchAddress("au", &hpara[2]);
+  Tr->SetBranchAddress("ad", &hpara[3]);
+  Tr->SetBranchAddress("bu", &hpara[4]);
+  Tr->SetBranchAddress("bd", &hpara[5]);
+  Tr->SetBranchAddress("kt2", &hpara[6]);
+  Tr->SetBranchAddress("Chi2", &Chi2);
+  Tr->SetBranchAddress("bound", &bound);
+  Lstructure::h1charge_part(Q2, tc[0], xl, xu);
+  for(int j = 0; j < 6; j++){
+    tc[1][j] = tc[0][j];//upper values
+    tc[2][j] = tc[0][j];//lower values
+  }
+  double temp[6];
+  double dchi2 = FindChi2Limit(paraset, CL, cut);
+  for (int i = 0; i < Nentry; i++){
+    Tr->GetEntry(i);
+    if (Chi2 > dchi2) continue;
+    if (cut != 0 && bound == 0) continue;
+    Lstructure::h1charge_part(Q2, temp, xl, xu, hpara);
+    if (temp[0] > tc[1][0]) tc[1][0] = temp[0];
+    if (temp[0] < tc[2][0]) tc[2][0] = temp[0];
+    if (temp[1] > tc[1][1]) tc[1][1] = temp[1];
+    if (temp[1] < tc[2][1]) tc[2][1] = temp[1];
+  }
+  return 0;
+}
 
 #endif

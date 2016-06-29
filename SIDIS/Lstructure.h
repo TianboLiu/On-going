@@ -32,6 +32,7 @@ class Lstructure{
   /* transversity */
   static int h1_std(const double * var, double * h1, const double * para);
   static int h1charge_std(const double Q2, double * tc, const double * para);
+  static int h1charge_part(const double Q2, double * tc, const double xl, const double xu, const double * para);
   static int tmd_h1_std(const double * var, double * h1, const double * para);
   static int h1p(const double * var, double * h1, const double * para);
   static int h1n(const double * var, double * h1, const double * para);
@@ -403,7 +404,7 @@ int Lstructure::h1_std(const double * var, double * h1, const double * para = 0)
 }
 
 int Lstructure::h1charge_std(const double Q2, double * tc, const double * para = 0){
-  double step = 0.01;
+  double step = 0.002;
   double sum[6] = {0, 0 ,0 ,0 ,0 ,0};
   double var[2], h1[6];
   var[1] = Q2;
@@ -419,6 +420,24 @@ int Lstructure::h1charge_std(const double Q2, double * tc, const double * para =
   }
   return 0;
 }
+
+int Lstructure::h1charge_part(const double Q2, double * tc, const double xl, const double xu, const double * para = 0){
+  double step = (xu - xl) / 100.0;
+  double sum[6] = {0, 0 ,0 ,0 ,0 ,0};
+  double var[2], h1[6];
+  var[1] = Q2;
+  for (double x = xl + 0.5 * step; x < xu; x = x + step){
+    var[0] = x;
+    h1_std(var, h1, para);
+    for (int i = 0; i < 6; i++){
+      sum[i] = sum[i] + h1[i];
+    }
+  }
+  for (int i = 0; i < 6; i++){
+    tc[i] = sum[i] * step;
+  }
+  return 0;
+} 
 
 int Lstructure::tmd_h1_std(const double * var, double * h1, const double * para = 0){
   //var: x, Q2, kt
