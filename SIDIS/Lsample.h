@@ -280,7 +280,7 @@ double Lsample::SetHessianA2(const int err){
   TMatrixD ev = eigen.GetEigenValues();
   TMatrixD smatrix = eigen.GetEigenVectors();
   for (int i = 0; i < 9; i++){
-    _eigenvalues[i] = ev(i);
+    _eigenvalues[i] = ev(i, i);
     for (int j = 0; j < 9; j++){
       _smatrix[i][j] = smatrix(i, j);
     }
