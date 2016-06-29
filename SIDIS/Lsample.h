@@ -49,9 +49,9 @@ class Lsample{
   double SetHessianA1(const int err);
   double SetHessianA2(const int err);
   double SetHessianA3(const int err);
-  int LikeliSampleA1(double calls, const char * savefile);
-  int LikeliSampleA2(double calls, const char * savefile);
-  int LikeliSampleA3(double calls, const char * savefile);
+  int LikeliSampleA1(int calls, const char * savefile);
+  int LikeliSampleA2(int calls, const char * savefile);
+  int LikeliSampleA3(int calls, const char * savefile);
 };
 
 Lsample::Lsample(int Atype){
@@ -288,7 +288,7 @@ double Lsample::SetHessianA2(const int err){
   return 0;
 }
 
-int Lsample::LikeliSampleA2(double calls, const char * savefile){
+int Lsample::LikeliSampleA2(int calls, const char * savefile){
   TFile * fs = new TFile(savefile, "RECREATE");
   TTree * Ts = new TTree("fitpara", "fitpara");
   Ts->SetDirectory(fs);
@@ -314,13 +314,13 @@ int Lsample::LikeliSampleA2(double calls, const char * savefile){
   Ts->Branch("weight", &weight, "weight/D");
   Ts->Branch("bound", &bound, "bound/D");
   double cup;
-  TRandom3 * ran;
-  ran->SetSeed(0);
+  gRandom->SetSeed(0);
   for (Long64_t n = 0; n < calls; n++){
     std::cout << "#" << n << std::endl;
     cup = 0;
     for (int j = 0; j < 9; j++){
-      bs[j] = ran->Gaus(0.0, 1.0/sqrt(_eigenvalues[j]));
+      bs[j] = gRandom->Gaus(0.0, 1.0/sqrt(_eigenvalues[j]));
+      std::cout << bs[j] << std::endl;
       as[j] = 0.0;
       cup = cup + bs[j]*bs[j]*_eigenvalues[j]/2.0;
     }
