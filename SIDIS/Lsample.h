@@ -41,9 +41,9 @@ class Lsample{
   int GetData(const char * datafile, const int Atype);
   int PrintData(const int n);
   int PrintStatus();
-  double Chi2A1(const double * fitpara);
-  double Chi2A2(const double * fitpara);
-  double Chi2A3(const double * fitpara);
+  double Chi2A1(const int err, const double * fitpara);
+  double Chi2A2(const int err, const double * fitpara);
+  double Chi2A3(const int err, const double * fitpara);
 };
 
 Lsample::Lsample(int Atype){
