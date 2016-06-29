@@ -317,11 +317,12 @@ int Lsample::LikeliSampleA2(double calls, const char * savefile){
   TRandom3 * ran;
   ran->SetSeed(0);
   for (Long64_t n = 0; n < calls; n++){
-    cup = 1;
+    std::cout << "#" << n << std::endl;
+    cup = 0;
     for (int j = 0; j < 9; j++){
       bs[j] = ran->Gaus(0.0, 1.0/sqrt(_eigenvalues[j]));
       as[j] = 0.0;
-      cup = cup * exp(-bs[j]*bs[j]*_eigenvalues[j]/2.0);
+      cup = cup + bs[j]*bs[j]*_eigenvalues[j]/2.0;
     }
     for (int i = 0; i < 9; i++){
       for(int j = 0; j < 9; j++){
@@ -335,7 +336,7 @@ int Lsample::LikeliSampleA2(double calls, const char * savefile){
     else if (std::abs(para[4]) > 1.0 || std::abs(para[5]) > 1.0) bound = 0;
     else bound = 1;
     chi2 = Chi2A2(_err, para);
-    weight = exp(-chi2/2.0) / cup;
+    weight = exp(cup-chi2/2.0);
     Ts->Fill();
   }
   fs->Write();
