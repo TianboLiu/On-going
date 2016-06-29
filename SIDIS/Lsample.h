@@ -245,7 +245,33 @@ double Lsample::Chi2A2(const int err = 1, const double * fitpara = 0){
   }
   return sum;
 }
+
+int Lsample::SetHessianA2(const int err){
+  double da = 1.0e-8;
+  double db = 1.0e-8;
+  double chi2min = Chi2A2(err);
+  double newpara[9];
+  double chi2[4];
+  TMatrixD hessian(9,9);
+  for (int i = 0; i < 9; i++){
+    for (int j = 0; j < 9; i++){
+      for (int s = 0; s < 9; s++) newpara[s] = _central[s];
+      newpara[i] = newpara[i] + da;
+      newpara[j] = newpara[j] + db;
+      chi2[0] = Chi2A2(newpara);//a+da, b+db
+      newpara[j] = newpara[j] - 2.0 * db;
+      chi2[1] = Chi2A2(newpara);//a+da, b-db
+      newpara[i] = newpara[i] - 2.0 * da;
+      chi2[3] = Chi2A2(newpara);//a-da, b-db
+      newpara[j] = newpara[j] + 2.0 * db;
+      chi2[2] = Chi2A2(newpara);//a-da, b+db
+      if (i == j) hessian(i, i) = (chi2[0] + chi2[3] - 2.0 * chi2min) / (2.0 * pow(da+db, 2));
+      else hessian(i, j) = (chi2[0] + chi2[3] - chi2[1] - chi2[2]) / (8.0 * da * db);
+      _hessian[i][j] = hessian(i, j);
+    }
+  }
+  hessian.Print();
+  return 0;
+}
   
-
-
 #endif
