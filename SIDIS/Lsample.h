@@ -240,7 +240,7 @@ double Lsample::Chi2A2(const int err = 1, const double * fitpara = 0){
       sum = sum + pow( (_A[i] - _A0[i]) / _ET[i], 2);
     }
   }
-  return 0;
+  return sum;
 }
   
 
