@@ -31,7 +31,7 @@ class Lsample{
   double _hessian[11][11];
   double _eigenvectors[11][11];
   double _eigenvalues[11];
-  double _para0[11];
+  double _para[11];
   double _central[11];
  public:
   Lsample(int Atype);
