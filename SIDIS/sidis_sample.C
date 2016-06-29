@@ -10,6 +10,7 @@ int main(){
   a2.InitialA2para();
   cout << a2.Chi2A2(1) << endl;
   a2.SetHessianA2(1);
+  a2.LikeliSampleA2(100, "test.root");
   
   return 0;
 }
