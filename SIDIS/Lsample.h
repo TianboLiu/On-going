@@ -254,7 +254,7 @@ double Lsample::SetHessianA2(const int err){
   double chi2[4];
   TMatrixD hessian(9,9);
   for (int i = 0; i < 9; i++){
-    for (int j = 0; j < 9; i++){
+    for (int j = 0; j < 9; j++){
       for (int s = 0; s < 9; s++) newpara[s] = _central[s];
       newpara[i] = newpara[i] + da;
       newpara[j] = newpara[j] + db;
