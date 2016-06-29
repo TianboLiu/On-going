@@ -316,12 +316,12 @@ int Lsample::LikeliSampleA2(double calls, const char * savefile){
   double cup;
   TRandom3 * ran;
   ran->SetSeed(0);
-  for (Long64_t n = 0; n < calls; i++){
+  for (Long64_t n = 0; n < calls; n++){
     cup = 1;
     for (int j = 0; j < 9; j++){
-      bs[j] = ran->Gaus(0.0, 1.0/sqrt(eigenvalues[j]));
+      bs[j] = ran->Gaus(0.0, 1.0/sqrt(_eigenvalues[j]));
       as[j] = 0.0;
-      cup = cup * exp(-bs[j]*bs[j]*eigenvalues[j]/2.0);
+      cup = cup * exp(-bs[j]*bs[j]*_eigenvalues[j]/2.0);
     }
     for (int i = 0; i < 9; i++){
       for(int j = 0; j < 9; j++){
