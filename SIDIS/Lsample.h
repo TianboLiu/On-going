@@ -57,6 +57,7 @@ class Lsample{
   int UniformSampleA2(const int _err, const int calls, const char * savefile);
   int UniformSampleA3(const int _err, const int calls, const char * savefile);
   double FindChi2Limit(const char * paraset, const double CL, const int cut);
+  int GetFith1charge(const double Q2, double tc[3][6], const char * paraset, const double CL, const int cut);
 };
 
 Lsample::Lsample(int Atype){
@@ -454,5 +455,42 @@ double Lsample::FindChi2Limit(const char * paraset, const double CL, const int c
   }
   return upper;
 }
+
+int Lsample::GetFith1charge(const double Q2, double tc[3][6], const char * paraset, const double CL, const int cut){
+  TFile * fr = new TFile(paraset,"r");
+  TTree * Tr = (TTree *) fr->Get("fitpara"); 
+  int Nentry = Tr->GetEntries();
+  double hpara[7];
+  double Chi2, bound;
+  Tr->SetBranchAddress("Nu", &hpara[0]);
+  Tr->SetBranchAddress("Nd", &hpara[1]);
+  Tr->SetBranchAddress("au", &hpara[2]);
+  Tr->SetBranchAddress("ad", &hpara[3]);
+  Tr->SetBranchAddress("bu", &hpara[4]);
+  Tr->SetBranchAddress("bd", &hpara[5]);
+  Tr->SetBranchAddress("kt2", &hpara[6]);
+  Tr->SetBranchAddress("Chi2", &Chi2);
+  Tr->SetBranchAddress("bound", &bound);
+  Lstructure::h1charge_std(Q2, tc[0]);
+  for(int j = 0; j < 6; j++){
+    tc[1][j] = tc[0][j];//upper values
+    tc[2][j] = tc[0][j];//lower values
+  }
+  double temp[6];
+  double dchi2 = FindChi2Limit(paraset, CL, cut);
+  for (int i = 0; i < Nentry; i++){
+    Tr->GetEntry(i);
+    if (Chi2 > dchi2) continue;
+    if (cut != 0 && bound == 0) continue;
+    Lstructure::h1charge_std(Q2, temp, hpara);
+    if (temp[0] > tc[1][0]) tc[1][0] = temp[0];
+    if (temp[0] < tc[2][0]) tc[2][0] = temp[0];
+    if (temp[1] > tc[1][1]) tc[1][1] = temp[1];
+    if (temp[1] < tc[2][1]) tc[2][1] = temp[1];
+  }
+  return 0;
+}
+
+
 
 #endif

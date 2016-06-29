@@ -13,8 +13,18 @@ int main(){
   }
   if (true){
     Lsample re(2);
-    cout << re.FindChi2Limit("Paraset/collinssample0.root", 0.955, 0) << endl;
+    cout << re.FindChi2Limit("Paraset/collinssample0.root", 0.955, 1) << endl;
     cout << re.FindChi2Limit("Paraset/collinssample1.root", 0.955, 1) << endl;
+  }
+  if (true){//get tensor charge
+    Lsample re(2);
+    double tc[3][6];
+    re.GetFith1charge(2.41, tc, "Paraset/collinssample0.root", 0.955, 1);
+    printf("%.4f  %.4f  %.4f\n", tc[0][0], tc[1][0] - tc[0][0], tc[2][0] - tc[0][0]);
+    printf("%.4f  %.4f  %.4f\n", tc[0][1], tc[1][1] - tc[0][1], tc[2][1] - tc[0][1]);
+    re.GetFith1charge(2.41, tc, "Paraset/collinssample1.root", 0.955, 1);
+    printf("%.4f  %.4f  %.4f\n", tc[0][0], tc[1][0] - tc[0][0], tc[2][0] - tc[0][0]);
+    printf("%.4f  %.4f  %.4f\n", tc[0][1], tc[1][1] - tc[0][1], tc[2][1] - tc[0][1]);
   }
 
   return 0;
