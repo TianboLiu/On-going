@@ -90,23 +90,22 @@ int Lsample::InitialA2para(){
   _para[1] = -1.0;//Nd
   _para[2] = 1.11;//a
   _para[3] = 3.64;//b
-  _para[4] = 0.25;//kt2
   //Collins
-  _para[5] = 0.49;//Nfav
-  _para[6] = -1.0;//Ndis
-  _para[7] = 1.06;//c
-  _para[8] = 0.07;//d
-  _para[9] = 1.5;//MC2
+  _para[4] = 0.49;//Nfav
+  _para[5] = -1.0;//Ndis
+  _para[6] = 1.06;//c
+  _para[7] = 0.07;//d
+  _para[8] = 1.5;//MC2
   //central
   _central[0] = _para[0];//Nu
   _central[1] = _para[1];//Nd
   _central[2] = _para[2];//a
   _central[3] = _para[3];//b
-  _central[4] = _para[5];//Nfav
-  _central[5] = _para[6];//Ndis
-  _central[6] = _para[7];//c
-  _central[7] = _para[8];//d
-  _central[8] = _para[9];//MC2
+  _central[4] = _para[4];//Nfav
+  _central[5] = _para[5];//Ndis
+  _central[6] = _para[6];//c
+  _central[7] = _para[7];//d
+  _central[8] = _para[8];//MC2
   return 0;
 }
 
@@ -183,11 +182,67 @@ int Lsample::PrintData(const int n){
     std::cout << "Lsample::PrintData: overflow!" << std::endl;
     return 1;
   }
-  printf("   x       y       z       Q2      Pt     A   Estat  Etotal\n");
+  printf("   x       y       z       Q2      Pt        A      Estat     Etotal\n");
   printf("%.4f  %.4f  %.4f  %.4f  %.4f  %.6f  %.6f  %.6f\n", _kin[n][0], _kin[n][1], _kin[n][2], _kin[n][3], _kin[n][4], _A0[n], _E0[n], _ET[n]);
   return 0;
 }
 
+int Lsample::PrintStatus(){
+  std::cout << "Asymmetry type: " << _Atype << std::endl;
+  std::cout << "Data number   : " << _Ndata << std::endl;
+  return 0;
+}
+
+double Lsample::Chi2A2(const int err = 1, const double * fitpara = 0){
+  double Tf[7], TD[7];
+  if (fitpara == 0){
+    Tf[0] = _central[0];//Nu
+    Tf[1] = _central[1];//Nd
+    Tf[2] = _central[2];//au
+    Tf[3] = _central[2];//ad
+    Tf[4] = _central[3];//bu
+    Tf[5] = _central[3];//bd
+    Tf[6] = 0.25;
+    TD[0] = _central[4];//Nfav
+    TD[1] = _central[5];//Ndis
+    TD[2] = _central[6];//c
+    TD[3] = _central[6];//c
+    TD[4] = _central[7];//d
+    TD[5] = _central[7];//d
+    TD[6] = _central[8];//MC2
+  }
+  else {
+    Tf[0] = fitpara[0];//Nu
+    Tf[1] = fitpara[1];//Nd
+    Tf[2] = fitpara[2];//au
+    Tf[3] = fitpara[2];//ad
+    Tf[4] = fitpara[3];//bu
+    Tf[5] = fitpara[3];//bd
+    Tf[6] = 0.25;
+    TD[0] = fitpara[4];//Nfav
+    TD[1] = fitpara[5];//Ndis
+    TD[2] = fitpara[6];//c
+    TD[3] = fitpara[6];//c
+    TD[4] = fitpara[7];//d
+    TD[5] = fitpara[7];//d
+    TD[6] = fitpara[8];//MC2
+  }
+  double Asym[2];
+  double sum = 0.0;
+  for (int i = 0; i < _Ndata; i++){
+    if (_Nucleon[i] == 0) Lstructure::AsinHpSn(_kin[i], Asym, Tf, TD);
+    else if (_Nucleon[i] == 1) Lstructure::AsinHpSp(_kin[i], Asym, Tf, TD);
+    _A[i] = Asym[(int) _Hadron[i]];
+    if (err == 0){
+      sum = sum + pow( (_A[i] - _A0[i]) / _E0[i], 2);
+    }
+    else {
+      sum = sum + pow( (_A[i] - _A0[i]) / _ET[i], 2);
+    }
+  }
+  return 0;
+}
+  
 
 
 #endif
