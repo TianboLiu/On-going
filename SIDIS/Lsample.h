@@ -292,10 +292,10 @@ int Lsample::LikeliSampleA2(int calls, const char * savefile){
   TFile * fs = new TFile(savefile, "RECREATE");
   TTree * Ts = new TTree("fitpara", "fitpara");
   Ts->SetDirectory(fs);
-  TMatrix as(9, 1);
-  TMatrix bs(9, 1);
-  TMatrix smatrix(9, 9);
-  TMatrix ev(9, 9);
+  TMatrixD as(9, 1);
+  TMatrixD bs(9, 1);
+  TMatrixD smatrix(9, 9);
+  TMatrixD ev(9, 9);
   double para[9];
   double weight, bound, chi2;
   double kt2 = 0.25;
@@ -328,8 +328,8 @@ int Lsample::LikeliSampleA2(int calls, const char * savefile){
     std::cout << "#" << n << std::endl;
     cup = 0;
     for (int j = 0; j < 9; j++){
-      bs(j,1) = gRandom->Gaus(0.0, 1.0/sqrt(ev(j,j)) );
-      cup = cup + bs(j,1)*bs(j,1)*ev(j,j)/2.0;
+      bs(j,0) = gRandom->Gaus(0.0, 1.0/sqrt(ev(j,j)) );
+      cup = cup + bs(j,0)*bs(j,0)*ev(j,j)/2.0;
     }
     bs.Print();
     as = smatrix * bs;
@@ -337,7 +337,7 @@ int Lsample::LikeliSampleA2(int calls, const char * savefile){
     as = smatrix * bs;
     as.Print();
     for (int i = 0; i < 9; i++){
-      para[i] = _central[i] + as(i, 1);
+      para[i] = _central[i] + as(i, 0);
     }
     if (std::abs(para[0]) > 1.0 || std::abs(para[1]) > 1.0) bound = 0;
     else if (std::abs(para[4]) > 1.0 || std::abs(para[5]) > 1.0) bound = 0;
