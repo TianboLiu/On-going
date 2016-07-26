@@ -1289,6 +1289,8 @@ int main(int argc, char **argv)
     double asQ0 = as(2.4), Q0=sqrt(2.4);
     hoppetEvolve(asQ0, Q0, nloop, 1.0, heralhc_init, Q0);  /*}}}*/
 
+    double ChiSQ = 0.0;
+
     // CALCULATE TENSOR CHARGE/*{{{*/
     double x_min_tens = 1.e-5;
     double x_max_tens = 0.9999;
@@ -1321,7 +1323,6 @@ int main(int argc, char **argv)
     }    
     outfile2.close();
     
-    double ChiSQ = 0.0;
     cout<< "--- The ChiSQ for this replica is " << ChiSQ << endl;
     
     if(VERBOSE) cout<<"done"<<endl;
