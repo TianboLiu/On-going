@@ -1289,6 +1289,76 @@ int main(int argc, char **argv)
     double asQ0 = as(2.4), Q0=sqrt(2.4);
     hoppetEvolve(asQ0, Q0, nloop, 1.0, heralhc_init, Q0);  /*}}}*/
 
+
+    if (true){
+      TFile * fs = new TFile("solidproton.root","r");
+      TTree * Ts = (TTree *) fs->Get("data");
+      double Nt = Ts->GetEntries();
+      double Hadron, Ebeam, x, y, z, Q2, Pt, Estat, Erel, Eabs;
+      Ts->SetBranchAddress("Hadron", &Hadron);
+      Ts->SetBranchAddress("Ebeam", &Ebeam);
+      Ts->SetBranchAddress("x", &x);
+      Ts->SetBranchAddress("y", &y);
+      Ts->SetBranchAddress("z", &z);
+      Ts->SetBranchAddress("Q2", &Q2);
+      Ts->SetBranchAddress("Pt", &Pt);
+      Ts->SetBranchAddress("E2stat", &Estat);
+      Ts->SetBranchAddress("E2rel", &Erel);
+      Ts->SetBranchAddress("E1abs", &Eabs);
+      TFile * fwp = new TFile("solid_proton_pip.root","RECREATE");
+      TTree * Twp = new TTree("data", "data");
+      Twp->SetDirectory(fwp);
+      TFile * fwm = new TFile("solid_proton_pim.root","RECREATE");
+      TTree * Twm = new TTree("data", "data");
+      Twm->SetDirectory(fwm);
+      double unpol, pol, Asym;
+      Twp->Branch("Ebeam", &Ebeam, "Ebeam/D");
+      Twp->Branch("x", &x, "x/D");
+      Twp->Branch("y", &y, "y/D");
+      Twp->Branch("z", &z, "z/D");
+      Twp->Branch("Q2", &Q2, "Q2/D");
+      Twp->Branch("Pt", &Pt, "Pt/D");
+      Twp->Branch("unpol", &unpol, "unpol/D");
+      Twp->Branch("pol", &pol, "pol/D");
+      Twp->Branch("Asym", &Asym, "Asym/D");
+      Twp->Branch("Estat", &Estat, "Estat/D");
+      Twp->Branch("Erel", &Erel, "Erel/D");
+      Twp->Branch("Eabs", &Eabs, "Eabs/D");
+      Twm->Branch("Ebeam", &Ebeam, "Ebeam/D");
+      Twm->Branch("x", &x, "x/D");
+      Twm->Branch("y", &y, "y/D");
+      Twm->Branch("z", &z, "z/D");
+      Twm->Branch("Q2", &Q2, "Q2/D");
+      Twm->Branch("Pt", &Pt, "Pt/D");
+      Twm->Branch("unpol", &unpol, "unpol/D");
+      Twm->Branch("pol", &pol, "pol/D");
+      Twm->Branch("Asym", &Asym, "Asym/D");
+      Twm->Branch("Estat", &Estat, "Estat/D");
+      Twm->Branch("Erel", &Erel, "Erel/D");
+      Twm->Branch("Eabs", &Eabs, "Eabs/D");
+      for (int i = 0; i < Nt; i++){
+	Ts->GetEntry(i);
+	cout << "#" << i << " in " << Nt << endl;
+	if (isnan(Erel)) continue;
+	if (isnan(Eabs)) continue;
+	if (isnan(Estat)) continue;
+	if (Hadron == 0){
+	  unpol = UNPOLARISED_P_PIP(Ebeam, z, x, Q2, Pt);
+	  pol = POLARISED_P_PIP(Ebeam, z, x, Q2, Pt);
+	  Asym = pol / unpol;
+	  Twp->Fill();
+	}
+	else {
+	  unpol = UNPOLARISED_P_PIM(Ebeam, z, x, Q2, Pt);
+	  pol = POLARISED_P_PIM(Ebeam, z, x, Q2, Pt);
+	  Asym = pol / unpol;
+	  Twm->Fill();
+	}
+      }
+      fwp->Write();
+      fwm->Write();
+    }
+
     double ChiSQ = 0.0;
 
     // CALCULATE TENSOR CHARGE/*{{{*/
