@@ -1299,9 +1299,7 @@ int main(int argc, char **argv)
     double tensor_up_jlab   = tensorcharge_up(x_min_jlab, x_max_jlab);
     double tensor_down_jlab = tensorcharge_down(x_min_jlab, x_max_jlab);/*}}}*/
 
-    double ChiSQ = 0.0;
-    cout<< "--- The ChiSQ for this replica is " << ChiSQ << endl;
-    
+    TString filename;
     filename.Form("%s_%s_%s/ChiSQ_%d_%d.dat",EXPERIMENT.Data(),TARGET.Data(),PARTICLE.Data(),segs, seg_used);
     ofstream outfile2(filename);	
     outfile2<<Form(" %12.4e  %12.4e  %12.4e  %12.4e  %12.4e  %12.4e  %12.4e",
