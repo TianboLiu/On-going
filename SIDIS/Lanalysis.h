@@ -1894,7 +1894,7 @@ int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], co
   Sp->SetDirectory(fs);
   TTree * Sm = new TTree("Rm", "Rm");
   Sm->SetDirectory(fs);
-  double Asym[3], ErrRelH[3], ErrRelS[3];
+  double Asym[3], ErrRelH[3], ErrRelS[3], ErrAbs[3];
   Sp->Branch("BinNumber", &BinNumber, "BinNumber/D");
   Sp->Branch("ErrRelH1", &ErrRelH[0], "ErrRelH1/D");
   Sp->Branch("ErrRelH2", &ErrRelH[1], "ErrRelH2/D");
@@ -1902,6 +1902,9 @@ int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], co
   Sp->Branch("ErrRelS1", &ErrRelS[0], "ErrRelS1/D");
   Sp->Branch("ErrRelS2", &ErrRelS[1], "ErrRelS2/D");
   Sp->Branch("ErrRelS3", &ErrRelS[2], "ErrRelS3/D");
+  Sp->Branch("ErrAbs1", &ErrAbs[0], "ErrAbs1/D");
+  Sp->Branch("ErrAbs2", &ErrAbs[1], "ErrAbs2/D");
+  Sp->Branch("ErrAbs3", &ErrAbs[2], "ErrAbs3/D");
   Sm->Branch("BinNumber", &BinNumber, "BinNumber/D");
   Sm->Branch("ErrRelH1", &ErrRelH[0], "ErrRelH1/D");
   Sm->Branch("ErrRelH2", &ErrRelH[1], "ErrRelH2/D");
@@ -1909,6 +1912,9 @@ int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], co
   Sm->Branch("ErrRelS1", &ErrRelS[0], "ErrRelS1/D");
   Sm->Branch("ErrRelS2", &ErrRelS[1], "ErrRelS2/D");
   Sm->Branch("ErrRelS3", &ErrRelS[2], "ErrRelS3/D");
+  Sm->Branch("ErrAbs1", &ErrAbs[0], "ErrAbs1/D");
+  Sm->Branch("ErrAbs2", &ErrAbs[1], "ErrAbs2/D");
+  Sm->Branch("ErrAbs3", &ErrAbs[2], "ErrAbs3/D");
   TF1 * f1 = new TF1("f1", "[0]*(1.0+[1]*cos(x)+[2]*cos(2.0*x)+[3]*cos(3.0*x)+[4]*cos(4.0*x)+[5]*cos(5.0*x))", -M_PI, M_PI);
   TF2 * f2 = new TF2("f2", "[0]*sin(x-y)+[1]*sin(x+y)+[2]*sin(3.0*x-y)", -M_PI, M_PI, 0.0, M_PI);
   double phih, phiS, sum1, sum2;
@@ -1985,6 +1991,9 @@ int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], co
     ErrRelH[0] = std::abs((A1-Asym[0]) / A1);
     ErrRelH[1] = std::abs((A2-Asym[1]) / A2);
     ErrRelH[2] = std::abs((A3-Asym[2]) / A3);
+    ErrAbs[0] = pow(A1 - Asym[0], 2);
+    ErrAbs[1] = pow(A2 - Asym[1], 2);
+    ErrAbs[2] = pow(A3 - Asym[2], 2);
     hs->Fit("f2","QO", "", ha, hb);
     rs = hs->GetFunction("f2");
     Asym[0] = rs->GetParameter(0);
@@ -1993,6 +2002,12 @@ int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], co
     ErrRelS[0] = std::abs((A1-Asym[0]) / A1);
     ErrRelS[1] = std::abs((A2-Asym[1]) / A2);
     ErrRelS[2] = std::abs((A3-Asym[2]) / A3);
+    ErrAbs[0] += pow(A1 - Asym[0], 2);
+    ErrAbs[1] += pow(A2 - Asym[1], 2);
+    ErrAbs[2] += pow(A3 - Asym[2], 2);
+    ErrAbs[0] = sqrt(ErrAbs[0]);
+    ErrAbs[1] = sqrt(ErrAbs[1]);
+    ErrAbs[2] = sqrt(ErrAbs[2]);
     Sp->Fill();
     ht1->Delete();
     ht2->Delete();
@@ -2075,6 +2090,9 @@ int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], co
     ErrRelH[0] = std::abs((A1-Asym[0]) / A1);
     ErrRelH[1] = std::abs((A2-Asym[1]) / A2);
     ErrRelH[2] = std::abs((A3-Asym[2]) / A3);
+    ErrAbs[0] = pow(A1 - Asym[0], 2);
+    ErrAbs[1] = pow(A2 - Asym[1], 2);
+    ErrAbs[2] = pow(A3 - Asym[2], 2);
     hs->Fit("f2","QO", "", ha, hb);
     rs = hs->GetFunction("f2");
     Asym[0] = rs->GetParameter(0);
@@ -2083,6 +2101,12 @@ int Lanalysis::EResolutionNeutron(const char bintree[], const char rmstree[], co
     ErrRelS[0] = std::abs((A1-Asym[0]) / A1);
     ErrRelS[1] = std::abs((A2-Asym[1]) / A2);
     ErrRelS[2] = std::abs((A3-Asym[2]) / A3);
+    ErrAbs[0] += pow(A1 - Asym[0], 2);
+    ErrAbs[1] += pow(A2 - Asym[1], 2);
+    ErrAbs[2] += pow(A3 - Asym[2], 2);
+    ErrAbs[0] = sqrt(ErrAbs[0]);
+    ErrAbs[1] = sqrt(ErrAbs[1]);
+    ErrAbs[2] = sqrt(ErrAbs[2]);
     Sm->Fill();
     ht1->Delete();
     ht2->Delete();
@@ -2325,37 +2349,39 @@ int Lanalysis::ENuclearPDF(const char bintree[], const char savefile[]){
 }
 
 int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
+  //FSI: Pn 0.756, Pp -0.0265, Nn 0.85, Np 0.87
+  //PWIA: pn 0.876, Pp -0.0232, Nn 1, Np 1
+  //double AZPWIA[4] = {2, 1, -0.0232, 0.876};
+  double Pp = -0.0232;
+  double Pn = 0.876;
+  double dpn = 0.03 / 0.86;
+  double dpp = 0.004 / 0.028;
+  double AZFSI[4] = {0.87 * 2, 0.85, -0.0265/0.87, 0.756/0.85};
+  double A1FSI[2], A2FSI[2], A3FSI[2];
+  double A1p[2], A2p[2], A3p[2];
+  double A1n[2], A2n[2], A3n[2];
   double BinNumber;
-  double At[3], Ap[3], An[3];
+  double kin[5];
   double fn, Nacc;
-  double ftime = _days;
   TFile * fb = new TFile(bintree, "r");
   TTree * Tp = (TTree *) fb->Get("binplus");
   double Nbinp = Tp->GetEntries();
   TTree * Tm = (TTree *) fb->Get("binminus");
   double Nbinm = Tm->GetEntries();
   Tp->SetBranchAddress("BinNumber", &BinNumber);
-  Tp->SetBranchAddress("A1", &At[0]);
-  Tp->SetBranchAddress("A2", &At[1]);
-  Tp->SetBranchAddress("A3", &At[2]);
-  Tp->SetBranchAddress("A1p", &Ap[0]);
-  Tp->SetBranchAddress("A2p", &Ap[1]);
-  Tp->SetBranchAddress("A3p", &Ap[2]);
-  Tp->SetBranchAddress("A1n", &An[0]);
-  Tp->SetBranchAddress("A2n", &An[1]);
-  Tp->SetBranchAddress("A3n", &An[2]);
+  Tp->SetBranchAddress("xm", &kin[0]);
+  Tp->SetBranchAddress("ym", &kin[1]);
+  Tp->SetBranchAddress("zm", &kin[2]);
+  Tp->SetBranchAddress("Q2m", &kin[3]);
+  Tp->SetBranchAddress("Ptm", &kin[4]);
   Tp->SetBranchAddress("fn", &fn);
   Tp->SetBranchAddress("Nacc", &Nacc);
   Tm->SetBranchAddress("BinNumber", &BinNumber);
-  Tm->SetBranchAddress("A1", &At[0]);
-  Tm->SetBranchAddress("A2", &At[1]);
-  Tm->SetBranchAddress("A3", &At[2]);
-  Tm->SetBranchAddress("A1p", &Ap[0]);
-  Tm->SetBranchAddress("A2p", &Ap[1]);
-  Tm->SetBranchAddress("A3p", &Ap[2]);
-  Tm->SetBranchAddress("A1n", &An[0]);
-  Tm->SetBranchAddress("A2n", &An[1]);
-  Tm->SetBranchAddress("A3n", &An[2]);
+  Tm->SetBranchAddress("xm", &kin[0]);
+  Tm->SetBranchAddress("ym", &kin[1]);
+  Tm->SetBranchAddress("zm", &kin[2]);
+  Tm->SetBranchAddress("Q2m", &kin[3]);
+  Tm->SetBranchAddress("Ptm", &kin[4]);
   Tm->SetBranchAddress("fn", &fn);
   Tm->SetBranchAddress("Nacc", &Nacc);
   TFile * fs = new TFile(savefile, "RECREATE");
@@ -2363,13 +2389,18 @@ int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
   Np->SetDirectory(fs);
   TTree * Nm = new TTree("nuclminus", "nuclminus");
   Nm->SetDirectory(fs);
-  double ErrRel[3];
-  double dfn, dpp, dpn;
+  double ErrFSI[3], ErrRel[3];
   Np->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Np->Branch("ErrFSI1", &ErrFSI[0], "ErrFSI1/D");
+  Np->Branch("ErrFSI2", &ErrFSI[1], "ErrFSI2/D");
+  Np->Branch("ErrFSI3", &ErrFSI[2], "ErrFSI3/D");
   Np->Branch("ErrRel1", &ErrRel[0], "ErrRel1/D");
   Np->Branch("ErrRel2", &ErrRel[1], "ErrRel2/D");
   Np->Branch("ErrRel3", &ErrRel[2], "ErrRel3/D");
   Nm->Branch("BinNumber", &BinNumber, "BinNumber/D");
+  Nm->Branch("ErrFSI1", &ErrFSI[0], "ErrFSI1/D");
+  Nm->Branch("ErrFSI2", &ErrFSI[1], "ErrFSI2/D");
+  Nm->Branch("ErrFSI3", &ErrFSI[2], "ErrFSI3/D");
   Nm->Branch("ErrRel1", &ErrRel[0], "ErrRel1/D");
   Nm->Branch("ErrRel2", &ErrRel[1], "ErrRel2/D");
   Nm->Branch("ErrRel3", &ErrRel[2], "ErrRel3/D");
@@ -2377,24 +2408,42 @@ int Lanalysis::ENuclearNeutron(const char bintree[], const char savefile[]){
   for (int i = 0; i < Nbinp; i++){
     Tp->GetEntry(i);
     std::cout << "#" << i << " in " << Nbinp << std::endl;
-    dfn = sqrt((1.0 - fn) * Nacc * ftime) / Nacc / fn;
-    dpn = 0.036 / 0.86;
-    for (int j = 0; j < 3; j++){
-      dpp = sqrt(1.0/((1.0 - fn) * Nacc * ftime) + pow(0.0065/0.028,2) + 0.01) * ((1.0 - fn) * 0.028 * Ap[j]) / (An[j]);
-      ErrRel[j] = sqrt(dfn*dfn + dpn*dpn + dpp*dpp);
-    }
+    Lstructure::AsinHmSp(kin, A1p);
+    Lstructure::AsinHmSn(kin, A1n);
+    Lstructure::AsinHmSN(AZFSI, kin, A1FSI);
+    Lstructure::AsinHpSp(kin, A2p);
+    Lstructure::AsinHpSn(kin, A2n);
+    Lstructure::AsinHpSN(AZFSI, kin, A2FSI);
+    Lstructure::Asin3HmSp(kin, A3p);
+    Lstructure::Asin3HmSn(kin, A3n);
+    Lstructure::Asin3HmSN(AZFSI, kin, A3FSI);
+    ErrFSI[0] = std::abs(((A1FSI[0] - (1.0 - fn) * Pp * A1p[0]) / (fn * Pn) - A1n[0]) / A1n[0]);
+    ErrFSI[1] = std::abs(((A2FSI[0] - (1.0 - fn) * Pp * A2p[0]) / (fn * Pn) - A2n[0]) / A2n[0]);
+    ErrFSI[2] = std::abs(((A3FSI[0] - (1.0 - fn) * Pp * A3p[0]) / (fn * Pn) - A3n[0]) / A3n[0]);
+    ErrRel[0] = sqrt(pow((0.1 * (1.0 - fn) * Pp * A1p[0]) / (fn * Pn * A1n[0]), 2) + pow(ErrFSI[0], 2) + dpn * dpn + pow((dpp * (1.0 - fn) * Pp * A1p[0]) / (fn * Pn * A1n[0]), 2));
+    ErrRel[1] = sqrt(pow((0.1 * (1.0 - fn) * Pp * A2p[0]) / (fn * Pn * A2n[0]), 2) + pow(ErrFSI[1], 2) + dpn * dpn + pow((dpp * (1.0 - fn) * Pp * A2p[0]) / (fn * Pn * A2n[0]), 2));
+    ErrRel[2] = sqrt(pow((1.0 * (1.0 - fn) * Pp * A3p[0]) / (fn * Pn * A3n[0]), 2) + pow(ErrFSI[2], 2) + dpn * dpn + pow((dpp * (1.0 - fn) * Pp * A3p[0]) / (fn * Pn * A3n[0]), 2));
     Np->Fill();
   }
   std::cout << "Nuclear effect: pi-" << std::endl;
   for (int i = 0; i < Nbinm; i++){
     Tm->GetEntry(i);
     std::cout << "#" << i << " in " << Nbinm << std::endl;
-    dfn = sqrt((1.0 - fn) * Nacc * ftime) / Nacc / fn;
-    dpn = 0.036 / 0.86;
-    for (int j = 0; j < 3; j++){
-      dpp = sqrt(1.0/((1.0 - fn) * Nacc * ftime) + pow(0.0065/0.028, 2) + 0.01) * ((1.0 - fn) * 0.028 * Ap[j]) / (An[j]);
-      ErrRel[j] = sqrt(dfn*dfn + dpn*dpn + dpp*dpp);
-    }
+    Lstructure::AsinHmSp(kin, A1p);
+    Lstructure::AsinHmSn(kin, A1n);
+    Lstructure::AsinHmSN(AZFSI, kin, A1FSI);
+    Lstructure::AsinHpSp(kin, A2p);
+    Lstructure::AsinHpSn(kin, A2n);
+    Lstructure::AsinHpSN(AZFSI, kin, A2FSI);
+    Lstructure::Asin3HmSp(kin, A3p);
+    Lstructure::Asin3HmSn(kin, A3n);
+    Lstructure::Asin3HmSN(AZFSI, kin, A3FSI);
+    ErrFSI[0] = std::abs(((A1FSI[1] - (1.0 - fn) * Pp * A1p[1]) / (fn * Pn) - A1n[1]) / A1n[1]);
+    ErrFSI[1] = std::abs(((A2FSI[1] - (1.0 - fn) * Pp * A2p[1]) / (fn * Pn) - A2n[1]) / A2n[1]);
+    ErrFSI[2] = std::abs(((A3FSI[1] - (1.0 - fn) * Pp * A3p[1]) / (fn * Pn) - A3n[1]) / A3n[1]);
+    ErrRel[0] = sqrt(pow((0.1 * (1.0 - fn) * Pp * A1p[1]) / (fn * Pn * A1n[1]), 2) + pow(ErrFSI[0], 2) + dpn * dpn + pow((dpp * (1.0 - fn) * Pp * A1p[1]) / (fn * Pn * A1n[1]), 2));
+    ErrRel[1] = sqrt(pow((0.1 * (1.0 - fn) * Pp * A2p[1]) / (fn * Pn * A2n[1]), 2) + pow(ErrFSI[1], 2) + dpn * dpn + pow((dpp * (1.0 - fn) * Pp * A2p[1]) / (fn * Pn * A2n[1]), 2));
+    ErrRel[2] = sqrt(pow((1.0 * (1.0 - fn) * Pp * A3p[1]) / (fn * Pn * A3n[1]), 2) + pow(ErrFSI[2], 2) + dpn * dpn + pow((dpp * (1.0 - fn) * Pp * A3p[1]) / (fn * Pn * A3n[1]), 2));
     Nm->Fill();
   }
   fs->Write();
