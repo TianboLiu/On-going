@@ -52,6 +52,13 @@ class Lstructure{
   static int h1tp(const double * var, double * h1t, const double * para);
   static int h1tn(const double * var, double * h1t, const double * para);
   static int h1tN(const double * AZ, const double * var, double * h1t, const double * para);
+  /* Boer-Mulders */
+  static int bm1_std(const double * var, double * bm1, const double * para);/* zeroth moment */
+  static int tmd_bm1_std(const double * var, double * bm1, const double * para);/* x, kt */
+  static int bm1M_std(const double * var, double * bm1, const double * para);/* first moment */
+  static int bm1p(const double * var, double * bm1, const double * para);
+  static int bm1n(const double * var, double * bm1, const double * para);
+  static int bm1N(const double * AZ, const double * var, double * bm1, const double * para);
   /* unpolarized FF */
   static int D1_dss(const double * var, double * D1);
   static int D1pip(const double * var, double * D1, const char set[]);
@@ -77,6 +84,12 @@ class Lstructure{
   static int FUUTp_bound(const double * var, double * FF, const char * nuclear, const double * fpara, const double * Dpara);
   static int FUUTn_bound(const double * var, double * FF, const char * nuclear, const double * fpara, const double * Dpara);
   static int FUUTN_bound(const double * AZ, const double * var, double * FF, const char * nuclear, const double * fpara, const double * Dpara);
+  static int FUUcosHp(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int FUUcosHn(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int FUUcosHN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int FUUcos2Hp(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int FUUcos2Hn(const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int FUUcos2HN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
   static int FUTsinHmSp(const double * var, double * FF, const double * fpara, const double * Dpara);
   static int FUTsinHmSn(const double * var, double * FF, const double * fpara, const double * Dpara);
   static int FUTsinHmSN(const double * AZ, const double * var, double * FF, const double * fpara, const double * Dpara);
@@ -108,6 +121,9 @@ class Lstructure{
   static int sigmaUUTp_bound(const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
   static int sigmaUUTn_bound(const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
   static int sigmaUUT_bound(const double * AZ, const double * lab, double * xs, const char * nuclear, const double * fpara, const double * Dpara);
+  static int sigmaUUp(const double * lab, double * xs, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int sigmaUUn(const double * lab, double * xs, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
+  static int sigmaUU(const double * AZ, const double * lab, double * xs, const double * fpara, const double * Dpara, const double * hpara, const double * Hpara);
 };
 
 Lstructure::Lstructure(double ts){
@@ -706,6 +722,99 @@ int Lstructure::h1tN(const double * AZ, const double * var, double * h1t, const 
   return 0;
 }
 
+int Lstructure::bm1_std(const double * var, double * bm1, const double * para = 0){
+  //var: x, Q2
+  double x = var[0];
+  double Nu, Nd, au, ad, bu, bd, MB2;
+  if (para == 0){
+    Nu = -0.45;
+    Nd = -1.0;
+    au = 1.0e-8;
+    ad = 1.0e-8;
+    bu = 1.0e-8;
+    bd = 1.0e-8;
+    MB2 = 0.09;
+  }
+  else {
+    Nu = para[0];
+    Nd = para[1];
+    au = para[2];
+    ad = para[3];
+    bu = para[4];
+    bd = para[5];
+    MB2 = para[6];
+  }
+  const double Mproton = 0.93827;
+  double f1[6];
+  f1p(var, f1, "ct14");
+  bm1[0] = -f1[0] * Nu * pow(au+bu, au+bu) / pow(au,au) / pow(bu,bu) * pow(x, au) * pow(1.0-x, bu) * sqrt(2.0*exp(1)) * Mproton * sqrt(MB2) / (MB2 + 0.25);//u
+  bm1[1] = -f1[1] * Nd * pow(ad+bd, ad+bd) / pow(ad,ad) / pow(bd,bd) * pow(x, ad) * pow(1.0-x, bd) * sqrt(2.0*exp(1)) * Mproton * sqrt(MB2) / (MB2 + 0.25);//d
+  bm1[2] = 0.0;//s
+  bm1[3] = 0.0;//ubar
+  bm1[4] = 0.0;//dbar
+  bm1[5] = 0.0;//sbar
+  return 0;
+}
+
+int Lstructure::tmd_bm1_std(const double * var, double * bm1, const double * para = 0){
+  //var: x, Q2, kt
+  double MB2;
+  if (para == 0) MB2 = 0.09;
+  else MB2 = para[6];
+  double kt2 = (MB2 * 0.25) / (MB2 + 0.25);
+  double bm0[6];
+  bm1_std(var, bm0, para);
+  for (int i = 0; i < 6; i++){
+    bm1[i] = bm0[i] * exp(-var[2]*var[2]/kt2) / (M_PI * kt2);
+  }
+  return 0;
+}
+
+int Lstructure::bm1M_std(const double * var, double * bm1, const double * para = 0){
+  //var: x, Q2
+  double MB2;
+  if (para == 0) MB2 = 0.09;
+  else MB2 = para[6];
+  double kt2 = 0.25 * MB2 / (MB2 + 0.25);
+  const double Mproton = 0.93827;
+  double bm0[6];
+  bm1_std(var, bm0, para);
+  for (int i = 0; i < 6; i++){
+    bm1[i] = kt2 / (2.0 * pow(Mproton,2)) * bm0[i];
+  }
+  return 0;
+}
+
+int Lstructure::bm1p(const double * var, double * bm1, const double * para = 0){
+  bm1_std(var, bm1, para);
+  return 0;
+}
+
+int Lstructure::bm1n(const double * var, double * bm1, const double * para = 0){
+  double bmp[6];
+  bm1_std(var, bmp, para);
+  bm1[0] = bmp[1];
+  bm1[1] = bmp[0];
+  bm1[2] = bmp[2];
+  bm1[3] = bmp[4];
+  bm1[4] = bmp[3];
+  bm1[5] = bmp[4];
+  return 0;
+}
+
+int Lstructure::bm1N(const double * AZ, const double * var, double * bm1, const double * para = 0){
+  //AZ: Np, Nn
+  double Np = AZ[0];
+  double Nn = AZ[1];
+  double bmp[6], bmn[6];
+  bm1p(var, bmp, para);
+  bm1n(var, bmn, para);
+  for (int i = 0; i < 6; i++){
+    bm1[i] = Np * bmp[i] + Nn * bmn[i];
+  }
+  return 0;
+}
+
 extern "C"{
   extern struct { int FINI;} fraginid_;
 }
@@ -1044,6 +1153,186 @@ int Lstructure::FUUTN_bound(const double * AZ, const double * var, double * FF, 
   double FFp[2], FFn[2];
   FUUTp_bound(var, FFp, nuclear, fpara, Dpara);
   FUUTn_bound(var, FFn, nuclear, fpara, Dpara);
+  FF[0] = Np * FFp[0] + Nn * FFn[0];
+  FF[1] = Np * FFp[1] + Nn * FFn[1];
+  return 0;
+}
+
+int Lstructure::FUUcosHp(const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  //var: x, Q2, z, Pt
+  double x = var[0];
+  double Q2 = var[1];
+  double z = var[2];
+  double Pt = var[3];
+  double fvar[2] = {x, Q2};
+  double Dvar[2] = {z, Q2};
+  double Akt2, Apt2;
+  double MB2, Mh2;
+  if (fpara == 0) Akt2 = 0.25;
+  else Akt2 = fpara[0];
+  if (Dpara == 0) Apt2 = 0.20;
+  else Apt2 = Dpara[0];
+  if (hpara == 0) MB2 = 0.09;
+  else MB2 = hpara[6];
+  if (Hpara == 0) Mh2 = 1.5;
+  else Mh2 = Hpara[6];
+  double Bkt2 = (0.25*MB2) / (MB2 + 0.25);
+  double Bpt2 = (0.20*Mh2) / (0.20 + Mh2);
+  double APt2 = Apt2 + z*z*Akt2;
+  double BPt2 = Bpt2 + z*z*Bkt2;
+  double f1[6], D1[6], bm1[6], H1[6];
+  const double Mproton = 0.93827;
+  const double Mpion = 0.13957;
+  //Apre = 0 turn off Cahn, Bpre = 0 turn off Boer-Mulders
+  double Apre = -(z * Akt2 * Pt) / (Mproton * APt2);
+  double Bpre = -(Bkt2 * Bpt2 * (z*z*Bkt2*(BPt2 - Pt*Pt)-Bkt2*BPt2) * Pt) / (z * Mpion * Mproton * Mproton * pow(BPt2, 3));
+  f1p(fvar, f1);
+  bm1p(fvar, bm1, hpara);
+  D1pip(Dvar, D1);
+  H1pip(Dvar, H1, Hpara);
+  FF[0] = 2.0*Mproton / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi+
+  D1pim(Dvar, D1);
+  H1pim(Dvar, H1, Hpara);
+  FF[1] = 2.0*Mproton / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi-
+  return 0;
+}
+
+int Lstructure::FUUcosHn(const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+    //var: x, Q2, z, Pt
+  double x = var[0];
+  double Q2 = var[1];
+  double z = var[2];
+  double Pt = var[3];
+  double fvar[2] = {x, Q2};
+  double Dvar[2] = {z, Q2};
+  double Akt2, Apt2;
+  double MB2, Mh2;
+  if (fpara == 0) Akt2 = 0.25;
+  else Akt2 = fpara[0];
+  if (Dpara == 0) Apt2 = 0.20;
+  else Apt2 = Dpara[0];
+  if (hpara == 0) MB2 = 0.09;
+  else MB2 = hpara[6];
+  if (Hpara == 0) Mh2 = 1.5;
+  else Mh2 = Hpara[6];
+  double Bkt2 = (0.25*MB2) / (MB2 + 0.25);
+  double Bpt2 = (0.20*Mh2) / (0.20 + Mh2);
+  double APt2 = Apt2 + z*z*Akt2;
+  double BPt2 = Bpt2 + z*z*Bkt2;
+  double f1[6], D1[6], bm1[6], H1[6];
+  const double Mproton = 0.93957;
+  const double Mpion = 0.13957;
+  //Apre = 0 turn off Cahn, Bpre = 0 turn off Boer-Mulders
+  double Apre = -(z * Akt2 * Pt) / (Mproton * APt2);
+  double Bpre = -(Bkt2 * Bpt2 * (z*z*Bkt2*(BPt2 - Pt*Pt)-Bkt2*BPt2) * Pt) / (z * Mpion * Mproton * Mproton * pow(BPt2, 3));
+  f1n(fvar, f1);
+  bm1n(fvar, bm1, hpara);
+  D1pip(Dvar, D1);
+  H1pip(Dvar, H1, Hpara);
+  FF[0] = 2.0*Mproton / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi+
+  D1pim(Dvar, D1);
+  H1pim(Dvar, H1, Hpara);
+  FF[1] = 2.0*Mproton / sqrt(Q2) * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2));//pi-
+  return 0;
+}
+
+int Lstructure::FUUcosHN(const double * AZ, const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  //AZ: Np, Nn
+  double Np = AZ[0];
+  double Nn = AZ[1];
+  double FFp[2], FFn[2];
+  FUUcosHp(var, FFp, fpara, Dpara, hpara, Hpara);
+  FUUcosHn(var, FFn, fpara, Dpara, hpara, Hpara);
+  FF[0] = Np * FFp[0] + Nn * FFn[0];
+  FF[1] = Np * FFp[1] + Nn * FFn[1];
+  return 0;
+}
+
+int Lstructure::FUUcos2Hp(const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  //var: x, Q2, z, Pt
+  double x = var[0];
+  double Q2 = var[1];
+  double z = var[2];
+  double Pt = var[3];
+  double fvar[2] = {x, Q2};
+  double Dvar[2] = {z, Q2};
+  double Akt2, Apt2;
+  double MB2, Mh2;
+  if (fpara == 0) Akt2 = 0.25;
+  else Akt2 = fpara[0];
+  if (Dpara == 0) Apt2 = 0.20;
+  else Apt2 = Dpara[0];
+  if (hpara == 0) MB2 = 0.09;
+  else MB2 = hpara[6];
+  if (Hpara == 0) Mh2 = 1.5;
+  else Mh2 = Hpara[6];
+  double Bkt2 = (0.25*MB2) / (MB2 + 0.25);
+  double Bpt2 = (0.20*Mh2) / (0.20 + Mh2);
+  double APt2 = Apt2 + z*z*Akt2;
+  double BPt2 = Bpt2 + z*z*Bkt2;
+  double f1[6], D1[6], bm1[6], H1[6];
+  const double Mproton = 0.93827;
+  const double Mpion = 0.13957;
+  //Apre = 0 turn off Cahn, Bpre = 0 turn off Boer-Mulders
+  double Apre = (z * z * Akt2 * Akt2 * Pt * Pt) / (Mproton * Mproton * APt2 * APt2);
+  double Bpre = (Bkt2 * Bpt2 * Pt * Pt) / (Mproton * Mpion * BPt2 * BPt2);
+  f1p(fvar, f1);
+  bm1p(fvar, bm1, hpara);
+  D1pip(Dvar, D1);
+  H1pip(Dvar, H1, Hpara);
+  FF[0] = 2.0*Mproton*Mproton / Q2 * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2)) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2);//pi+
+  D1pim(Dvar, D1);
+  H1pim(Dvar, H1, Hpara);
+  FF[1] = 2.0*Mproton*Mproton / Q2 * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2)) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2);//pi-
+  return 0;
+}
+
+int Lstructure::FUUcos2Hn(const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  //var: x, Q2, z, Pt
+  double x = var[0];
+  double Q2 = var[1];
+  double z = var[2];
+  double Pt = var[3];
+  double fvar[2] = {x, Q2};
+  double Dvar[2] = {z, Q2};
+  double Akt2, Apt2;
+  double MB2, Mh2;
+  if (fpara == 0) Akt2 = 0.25;
+  else Akt2 = fpara[0];
+  if (Dpara == 0) Apt2 = 0.20;
+  else Apt2 = Dpara[0];
+  if (hpara == 0) MB2 = 0.09;
+  else MB2 = hpara[6];
+  if (Hpara == 0) Mh2 = 1.5;
+  else Mh2 = Hpara[6];
+  double Bkt2 = (0.25*MB2) / (MB2 + 0.25);
+  double Bpt2 = (0.20*Mh2) / (0.20 + Mh2);
+  double APt2 = Apt2 + z*z*Akt2;
+  double BPt2 = Bpt2 + z*z*Bkt2;
+  double f1[6], D1[6], bm1[6], H1[6];
+  const double Mproton = 0.93957;
+  const double Mpion = 0.13957;
+  //Apre = 0 turn off Cahn, Bpre = 0 turn off Boer-Mulders
+  double Apre = (z * z * Akt2 * Akt2 * Pt * Pt) / (Mproton * Mproton * APt2 * APt2);
+  double Bpre = (Bkt2 * Bpt2 * Pt * Pt) / (Mproton * Mpion * BPt2 * BPt2);
+  f1n(fvar, f1);
+  bm1n(fvar, bm1, hpara);
+  D1pip(Dvar, D1);
+  H1pip(Dvar, H1, Hpara);
+  FF[0] = 2.0*Mproton*Mproton / Q2 * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2)) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2);//pi+
+  D1pim(Dvar, D1);
+  H1pim(Dvar, H1, Hpara);
+  FF[1] = 2.0*Mproton*Mproton / Q2 * (Apre * x * (pow(2.0/3.0, 2) * (f1[0]*D1[0] + f1[3]*D1[3]) + pow(1.0/3.0, 2) * (f1[1]*D1[1] + f1[2]*D1[2] + f1[4]*D1[4] + f1[5]*D1[5])) * exp(-pow(Pt,2)/APt2) / (M_PI * APt2)) + Bpre * x * (pow(2.0/3.0, 2) * (bm1[0]*H1[0] + bm1[3]*H1[3]) + pow(1.0/3.0, 2) * (bm1[1]*H1[1] + bm1[2]*H1[2] + bm1[4]*H1[4] + bm1[5]*H1[5])) * exp(-pow(Pt,2)/BPt2) / (M_PI * BPt2);//pi-
+  return 0;
+}
+
+int Lstructure::FUUcos2HN(const double * AZ, const double * var, double * FF, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  //AZ: Np, Nn
+  double Np = AZ[0];
+  double Nn = AZ[1];
+  double FFp[2], FFn[2];
+  FUUcos2Hp(var, FFp, fpara, Dpara, hpara, Hpara);
+  FUUcos2Hn(var, FFn, fpara, Dpara, hpara, Hpara);
   FF[0] = Np * FFp[0] + Nn * FFn[0];
   FF[1] = Np * FFp[1] + Nn * FFn[1];
   return 0;
@@ -1619,6 +1908,66 @@ int Lstructure::sigmaUUT_bound(const double * AZ, const double * lab, double * x
   double jac = Jacobian(lab);
   xs[0] = jac * pre * FF[0];//pi+
   xs[1] = jac * pre * FF[1];//pi-
+  return 0;
+}
+
+int Lstructure::sigmaUUp(const double * lab, double * xs, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
+  CalcVariables(lab, phys);
+  double var[4] = {phys[0], phys[3], phys[2], phys[4]};
+  double FF0[2], FF1[2], FF2[2];
+  FUUTp(var, FF0, fpara, Dpara);
+  FUUcosHp(var, FF1, fpara, Dpara, hpara, Hpara);
+  FUUcos2Hp(var, FF2, fpara, Dpara, hpara, Hpara);
+  double pre = xsprefactor(phys);
+  double jac = Jacobian(lab);
+  double gamma = 2.0 * phys[0] * 0.939 / sqrt(phys[3]);
+  double epsilon = (1.0 - phys[1] - 0.25 * gamma * gamma * phys[1] * phys[1]) / (1.0 - phys[1] + 0.5 * phys[1] * phys[1] + 0.25 * gamma * gamma * phys[1] * phys[1]);
+  //c1 = 0 turn off cos(phih), c2 = 0 turn off cos(2phih)
+  double c1 = sqrt(2.0 * epsilon * (1.0 + epsilon));
+  double c2 = epsilon;
+  xs[0] = jac * pre * (FF0[0] + c1 * FF1[0] * cos(phys[5]) + c2 * FF2[0] * cos(2.0*phys[5]));//pi+
+  xs[1] = jac * pre * (FF0[1] + c1 * FF1[1] * cos(phys[5]) + c2 * FF2[1] * cos(2.0*phys[5]));//pi-
+  return 0;
+}
+
+int Lstructure::sigmaUUn(const double * lab, double * xs, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
+  CalcVariables(lab, phys);
+  double var[4] = {phys[0], phys[3], phys[2], phys[4]};
+  double FF0[2], FF1[2], FF2[2];
+  FUUTn(var, FF0, fpara, Dpara);
+  FUUcosHn(var, FF1, fpara, Dpara, hpara, Hpara);
+  FUUcos2Hn(var, FF2, fpara, Dpara, hpara, Hpara);
+  double pre = xsprefactor(phys);
+  double jac = Jacobian(lab);
+  double gamma = 2.0 * phys[0] * 0.939 / sqrt(phys[3]);
+  double epsilon = (1.0 - phys[1] - 0.25 * gamma * gamma * phys[1] * phys[1]) / (1.0 - phys[1] + 0.5 * phys[1] * phys[1] + 0.25 * gamma * gamma * phys[1] * phys[1]);
+  //c1 = 0 turn off cos(phih), c2 = 0 turn off cos(2phih)
+  double c1 = sqrt(2.0 * epsilon * (1.0 + epsilon));
+  double c2 = epsilon;
+  xs[0] = jac * pre * (FF0[0] + c1 * FF1[0] * cos(phys[5]) + c2 * FF2[0] * cos(2.0*phys[5]));//pi+
+  xs[1] = jac * pre * (FF0[1] + c1 * FF1[1] * cos(phys[5]) + c2 * FF2[1] * cos(2.0*phys[5]));//pi-
+  return 0;
+}
+
+int Lstructure::sigmaUU(const double * AZ, const double * lab, double * xs, const double * fpara = 0, const double * Dpara = 0, const double * hpara = 0, const double * Hpara = 0){
+  double phys[9];// x, y, z, Q2, Pt, phih, phiS, W, Wp
+  CalcVariables(lab, phys);
+  double var[4] = {phys[0], phys[3], phys[2], phys[4]};
+  double FF0[2], FF1[2], FF2[2];
+  FUUTN(AZ, var, FF0, fpara, Dpara);
+  FUUcosHN(AZ, var, FF1, fpara, Dpara, hpara, Hpara);
+  FUUcos2HN(AZ, var, FF2, fpara, Dpara, hpara, Hpara);
+  double pre = xsprefactor(phys);
+  double jac = Jacobian(lab);
+  double gamma = 2.0 * phys[0] * 0.939 / sqrt(phys[3]);
+  double epsilon = (1.0 - phys[1] - 0.25 * gamma * gamma * phys[1] * phys[1]) / (1.0 - phys[1] + 0.5 * phys[1] * phys[1] + 0.25 * gamma * gamma * phys[1] * phys[1]);
+  //c1 = 0 turn off cos(phih), c2 = 0 turn off cos(2phih)
+  double c1 = sqrt(2.0 * epsilon * (1.0 + epsilon));
+  double c2 = epsilon;
+  xs[0] = jac * pre * (FF0[0] + c1 * FF1[0] * cos(phys[5]) + c2 * FF2[0] * cos(2.0*phys[5]));//pi+
+  xs[1] = jac * pre * (FF0[1] + c1 * FF1[1] * cos(phys[5]) + c2 * FF2[1] * cos(2.0*phys[5]));//pi-
   return 0;
 }
 
