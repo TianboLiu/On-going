@@ -66,6 +66,31 @@ int main(int argc, char* argv[]){
   }
 
   /*****************************************/
+  if (true){// bin analysis triger prescale N11
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
+    TString binfilep = "Neutron/bininfo_3He_11p.root";
+    TString binfilem = "Neutron/bininfo_3He_11m.root";
+    Lanalysis N11(datadir, binfilep, binfilem);
+    double lumi = 1.0e+10 * pow(0.197327, 2);
+    double days = 48.0;
+    double ST = 0.6;
+    N11.SetSimInfo(lumi, days, ST, 10);
+    N11.BinAnalysisNeutronTriger("Neutron/sidisbintriger_11.root");
+  }
+  if (true){// bin analysis triger prescale N8
+    TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N8";
+    TString binfilep = "Neutron/bininfo_3He_8p.root";
+    TString binfilem = "Neutron/bininfo_3He_8m.root";
+    Lanalysis N8(datadir, binfilep, binfilem);
+    double lumi = 1.0e+10 * pow(0.197327, 2);
+    double days = 21.0;
+    double ST = 0.6;
+    N8.SetSimInfo(lumi, days, ST, 10);
+    N8.BinAnalysisNeutronTriger("Neutron/sidisbintriger_8.root");
+  }
+  
+
+  /*****************************************/
   if (false){// bin resolution N11
     TString datadir = "/var/phy/project/mepg/tl190/SoLID-cluster/RUN0526N11";
     TString bintree = "Neutron/sidisbin_11.root";
