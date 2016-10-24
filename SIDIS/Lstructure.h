@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cmath>
 
-#include "LHAPDF/LHAPDF.h" 
+#include "LHAPDF/LHAPDF.h"
 
 class Lstructure{
  protected:
